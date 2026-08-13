@@ -104,7 +104,9 @@
 
     /* ===== 副业版（黑白调 · 参考 WSJ Markets 顶部黑带 + 写文章双栏格局） ===== */
     .sp-shell{position:relative;width:min(700px,calc(100% - 40px));margin:40px auto 40px;background:#fff;display:grid;grid-template-rows:auto 1fr;box-shadow:0 8px 26px rgba(0,0,0,.25);color:#111;overflow:hidden}
-    .sp-mast-band{background:#000;color:#fff;padding:13px 26px;display:flex;align-items:center;gap:14px;font:bold 13px Arial;letter-spacing:2px}
+    .sp-mast-band{background:#000;color:#fff;padding:13px 26px;display:flex;align-items:center;gap:14px;font:bold 13px Arial;letter-spacing:2px;flex-wrap:wrap}
+    .sp-mast-edit{display:inline-block;padding:2px 4px;border-radius:0;outline:0;transition:background .12s}
+    .sp-mast-edit:focus{outline:0;box-shadow:inset 0 -1.5px 0 0 #fff}
     .sp-mast-band .sp-mark{font:bold 16px Georgia;letter-spacing:0}
     .sp-mast-band .sp-divider{color:#666;font-weight:normal}
     .sp-mast-band .meta{margin-left:auto;font:11px Arial;letter-spacing:1.2px;color:#bdbdbd;font-weight:normal}
@@ -112,10 +114,25 @@
     .sp-body{display:grid;grid-template-columns:3fr 4fr;gap:0;padding:26px 28px 130px;min-width:0}
     .sp-image-col{display:flex;flex-direction:column;gap:14px;padding-right:22px;border-right:1px solid #d8d8d8}
     .sp-image-col .hero{margin:0;width:100%}
-    .sp-tag-edit{font:bold 11px Arial;color:#000;letter-spacing:1.6px;display:block;margin-bottom:10px}
-    .sp-title-edit{font:38px/1.05 Georgia,"PingFang SC",serif;color:#000;letter-spacing:-1.2px;margin:0 0 18px;outline:0}
-    .sp-title-edit:focus{background:#f7f7f7}
+    .sp-tag-edit{font:bold 11px Arial;color:#000;letter-spacing:1.6px;display:block;margin-bottom:10px;outline:0;padding:2px 0;transition:background .12s}
+    .sp-tag-edit:focus{outline:0;box-shadow:inset 0 -1.5px 0 0 #000}
+    .sp-title-edit{
+      font:bold 40px/1.0 Georgia,"PingFang SC",serif;
+      color:#fff;background:#000;
+      letter-spacing:-1.5px;margin:4px 0 18px;outline:0;
+      display:inline-block;padding:14px 22px 12px;
+      border:0;border-radius:0;
+      box-sizing:border-box;max-width:100%;
+      word-break:break-word;
+      box-shadow:0 2px 0 0 #000;
+    }
+    .sp-title-edit::before{content:"\2192";display:inline-block;margin-right:10px;font:bold 26px/1 Georgia,sans-serif;color:#fff;opacity:.9}
+    .sp-title-edit:focus{outline:0;background:#000;color:#fff;box-shadow:0 3px 0 0 #000}
+    .sp-title-edit:empty::before{content:attr(data-placeholder);color:rgba(255,255,255,.5);font-style:italic}
     .sp-stats-line{display:flex;gap:30px;font:11px Arial;letter-spacing:1px;color:#444;border-top:2px solid #000;border-bottom:1px solid #000;padding:10px 0;margin-bottom:18px}
+    .sp-stats-line>div{flex:1;min-width:0}
+    .sp-stats-label{display:block;outline:0;padding:0;transition:background .12s}
+    .sp-stats-label:focus{outline:0;box-shadow:inset 0 -1.5px 0 0 #000}
     .sp-stats-line b{font:bold 16px "Times New Roman",Georgia,serif;color:#000;display:block;margin-top:2px;letter-spacing:-.5px}
 
     .sp-content-col{display:flex;flex-direction:column;padding-left:22px;min-width:0}
@@ -133,7 +150,8 @@
     .sp-item .key{display:flex;align-items:center;gap:2px;padding-top:6px;flex-shrink:0}
     .sp-item .delete-btn{background:none;border:0;color:#aaa;cursor:pointer;font-size:18px;padding:0 6px;border-radius:2px;line-height:1}
     .sp-item .delete-btn:hover{background:#f0f0f0;color:#000}
-    .sp-item .editable[contenteditable="true"]:focus{background:#f7f7f7;outline:1px dashed #000;outline-offset:2px}
+    .sp-item .editable[contenteditable="true"]{transition:background .12s}
+    .sp-item .editable[contenteditable="true"]:focus{background:#fff;outline:0;box-shadow:inset 0 -2px 0 0 #000}
     .sp-empty{padding:48px 0;text-align:center;color:#999;font:13px Georgia;letter-spacing:1px}
 
     /* 副业表单 */
@@ -318,6 +336,11 @@
       // 副业（WSJ Markets 风格条目）
       sideSection: '副业笔记',
       sideTitle: '副业笔记',
+      sideMastLeft: '副业',
+      sideMastRight: 'NOTES',
+      sideMetaPrefix: 'FROM YOUR STUDIO · 共 ',
+      sideMetaSuffix: ' 条',
+      sideSubTag: '副业笔记 / SIDE PROJECTS',
       kicker: '商业与市场 / 深度报道',
       deck: '用清晰、克制的报纸版式，让每一段重要叙述都有呼吸的空间。',
       byline: '记者：编辑部',
@@ -478,6 +501,13 @@
         else if (key === 'mastLeft') state.mastLeft = txt;
         else if (key === 'mastRight') state.mastRight = txt;
         else if (key === 'storyTag') state.storyTag = txt;
+        else if (key === 'sideMastLeft') state.sideMastLeft = txt;
+        else if (key === 'sideMastRight') state.sideMastRight = txt;
+        else if (key === 'sideMetaPrefix') state.sideMetaPrefix = txt;
+        else if (key === 'sideMetaSuffix') state.sideMetaSuffix = txt;
+        else if (key === 'sideSubTag') state.sideSubTag = txt;
+        else if (key === 'sideStats1Label') state.sideStats1Label = txt;
+        else if (key === 'sideStats2Label') state.sideStats2Label = txt;
       });
       // 副业条目 inline 编辑
       document.querySelectorAll('.editable[contenteditable][data-edit]').forEach(el => {
@@ -777,19 +807,19 @@
           bar('写副业 · 副业笔记', 'sideproject-card', '副业笔记') +
           `<article id="sideproject-card" class="sp-shell">
             <div class="sp-mast-band">
-              <span class="sp-mark">副业</span>
+              <span class="sp-mark sp-mast-edit edit" contenteditable="true" data-edit="sideMastLeft">${esc(state.sideMastLeft || '副业')}</span>
               <span class="sp-divider">|</span>
-              <span>NOTES</span>
-              <span class="meta">FROM YOUR STUDIO · 共 ${entries.length} 条</span>
+              <span class="sp-mast-edit edit" contenteditable="true" data-edit="sideMastRight">${esc(state.sideMastRight || 'NOTES')}</span>
+              <span class="meta"><span class="sp-mast-edit edit" contenteditable="true" data-edit="sideMetaPrefix">${esc(state.sideMetaPrefix || 'FROM YOUR STUDIO · 共 ')}</span>${entries.length}<span class="sp-mast-edit edit" contenteditable="true" data-edit="sideMetaSuffix">${esc(state.sideMetaSuffix || ' 条')}</span></span>
             </div>
             <div class="sp-body">
               <div class="sp-image-col">
                 ${filePicker('sideImage', '副业配图')}
-                <small class="sp-tag-edit">副业笔记 / SIDE PROJECTS</small>
-                <h1 class="sp-title-edit edit" contenteditable="true" data-edit="sideTitle">${esc(state.sideSection || '副业笔记')}</h1>
+                <small class="sp-tag-edit edit" contenteditable="true" data-edit="sideSubTag">${esc(state.sideSubTag || '副业笔记 / SIDE PROJECTS')}</small>
+                <h1 class="sp-title-edit edit" contenteditable="true" data-edit="sideTitle" data-placeholder="副业笔记">${esc(state.sideSection || '副业笔记')}</h1>
                 <div class="sp-stats-line">
-                  <div>本月新建条目<b>${entries.length}</b></div>
-                  <div>进行中<b>${activeCount}</b></div>
+                  <div><span class="sp-stats-label edit" contenteditable="true" data-edit="sideStats1Label">${esc(state.sideStats1Label || '本月新建条目')}</span><b>${entries.length}</b></div>
+                  <div><span class="sp-stats-label edit" contenteditable="true" data-edit="sideStats2Label">${esc(state.sideStats2Label || '进行中')}</span><b>${activeCount}</b></div>
                 </div>
               </div>
               <div class="sp-content-col">
@@ -931,6 +961,13 @@
           else if (key === 'mastLeft') state.mastLeft = el.textContent;
           else if (key === 'mastRight') state.mastRight = el.textContent;
           else if (key === 'storyTag') state.storyTag = el.textContent;
+          else if (key === 'sideMastLeft') state.sideMastLeft = el.textContent;
+          else if (key === 'sideMastRight') state.sideMastRight = el.textContent;
+          else if (key === 'sideMetaPrefix') state.sideMetaPrefix = el.textContent;
+          else if (key === 'sideMetaSuffix') state.sideMetaSuffix = el.textContent;
+          else if (key === 'sideSubTag') state.sideSubTag = el.textContent;
+          else if (key === 'sideStats1Label') state.sideStats1Label = el.textContent;
+          else if (key === 'sideStats2Label') state.sideStats2Label = el.textContent;
           save();
         };
         el.onblur = () => pushHistory();
