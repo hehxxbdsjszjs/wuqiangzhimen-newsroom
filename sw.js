@@ -1,6 +1,6 @@
 // Service Worker for Newsroom Studio - Offline Support
 // v11: Network-first strategy (fixes stale cache issue)
-const CACHE_NAME = 'wqzm-v12';
+const CACHE_NAME = 'wqzm-v13';
 const PAGE_URL = './';
 
 self.addEventListener('install', (event) => {
