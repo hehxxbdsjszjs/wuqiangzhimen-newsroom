@@ -312,29 +312,18 @@
     .panel::-webkit-scrollbar-thumb,.work::-webkit-scrollbar-thumb,.sp-tabs::-webkit-scrollbar-thumb,.tabs::-webkit-scrollbar-thumb{background:#888;border-radius:3px}
   </style>
 
+<!-- Service Worker 已彻底移除，避免缓存导致页面跳动/无限刷新 -->
 <script>
-// === 自修复：清理旧 Service Worker + 旧缓存 ===
+// 一次性清理旧版 Service Worker（不注册新的，不刷新页面）
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.getRegistrations().then(function(regs) {
-    // 先注销所有旧的 SW
-    return Promise.all(regs.map(function(r) { return r.unregister(); }));
-  }).then(function() {
-    // 清除所有旧缓存
-    if ('caches' in window) {
-      return caches.keys().then(function(names) {
-        return Promise.all(names.map(function(n) { return caches.delete(n); }));
-      });
-    }
-  }).then(function() {
-    // 注册新的 SW（网络优先策略）
-    navigator.serviceWorker.register('./sw.js').catch(function(){});
-  }).catch(function() {
-    navigator.serviceWorker.register('./sw.js').catch(function(){});
+    regs.forEach(function(r) { r.unregister(); });
   });
-  // 新 SW 接管后自动刷新
-  navigator.serviceWorker.addEventListener('controllerchange', function() {
-    location.reload();
-  });
+  if ('caches' in window) {
+    caches.keys().then(function(names) {
+      names.forEach(function(n) { caches.delete(n); });
+    });
+  }
 }
 </script>
 </head>
@@ -342,7 +331,7 @@ if ('serviceWorker' in navigator) {
   <nav class="nav">
     <span class="mark">N</span>
     <span class="brand">Newsroom Studio</span>
-    <span style="font-size:9px;color:#999;background:#f0f0f0;padding:1px 6px;border-radius:3px;margin-left:4px">v13</span>
+    <span style="font-size:9px;color:#999;background:#f0f0f0;padding:1px 6px;border-radius:3px;margin-left:4px">v14</span>
     <div class="tabs">
       <button data-tab="news" class="on">新闻排版</button>
       <button data-tab="write">写文章</button>
