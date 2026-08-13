@@ -1,42 +1,19 @@
-// Service Worker for Newsroom Studio - Offline Support
-// v11: Network-first strategy (fixes stale cache issue)
-const CACHE_NAME = 'wqzm-v13';
-const PAGE_URL = './';
-
+// Service Worker 自注销脚本 - v14
+// 彻底移除 SW 系统，此文件仅用于清理旧版残留
 self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.add(PAGE_URL))
-  );
   self.skipWaiting();
+  event.waitUntil(
+    caches.keys().then(keys => Promise.all(keys.map(k => caches.delete(k))))
+  );
 });
 
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then((keys) => {
-      return Promise.all(
-        keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k))
-      );
-    })
+    self.registration.unregister().then(() => {
+      return caches.keys().then(keys => Promise.all(keys.map(k => caches.delete(k))));
+    }).then(() => self.clients.claim())
   );
-  self.clients.claim();
 });
 
-// Network-first: always try network first, fall back to cache when offline
-self.addEventListener('fetch', (event) => {
-  if (event.request.method !== 'GET') return;
-  event.respondWith(
-    fetch(event.request).then((response) => {
-      // Cache same-origin responses for offline use
-      if (response.ok && event.request.url.startsWith(self.location.origin)) {
-        const clone = response.clone();
-        caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
-      }
-      return response;
-    }).catch(() => {
-      // Network failed - return cached version
-      return caches.match(event.request).then((cached) => {
-        return cached || caches.match(PAGE_URL);
-      });
-    })
-  );
-});
+// 不拦截任何请求，全部直通网络
+self.addEventListener('fetch', () => {});
