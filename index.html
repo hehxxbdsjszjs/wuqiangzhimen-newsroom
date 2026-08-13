@@ -2,6 +2,10 @@
 <html lang="zh-CN">
 <head>
   <meta charset="utf-8" />
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+  <meta name="app-version" content="v9-full-edit">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="mobile-web-app-capable" content="yes" />
@@ -185,6 +189,30 @@
     .stamp-center-fill{fill:#000;opacity:.05}
     .sp-shell .stamp-wrap{bottom:28px}
 
+    /* ===== 全局可编辑提示（v9） ===== */
+    .edit[contenteditable="true"]{
+      -webkit-user-select:text !important;
+      user-select:text !important;
+      -webkit-tap-highlight-color:transparent;
+      cursor:text;
+      transition:background .12s,box-shadow .12s;
+      border-radius:1px;
+    }
+    .edit[contenteditable="true"]:focus,
+    .edit[contenteditable="true"]:active{
+      outline:0 !important;
+      -webkit-tap-highlight-color:transparent !important;
+      background:rgba(255,235,150,.35) !important;
+      box-shadow:inset 0 -2px 0 0 rgba(0,0,0,.85);
+    }
+    .edit[contenteditable="true"]:hover:not(:focus){
+      background:rgba(0,0,0,.04);
+    }
+    .sp-title-edit:focus,.sp-title-edit:active{
+      background:#000 !important;
+      color:#fff !important;
+      box-shadow:0 3px 0 0 #000 !important;
+    }
     /* ===== Toast ===== */
     .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(60px);background:var(--dark);color:#f7f3e9;padding:12px 24px;border-radius:4px;font-size:14px;z-index:9999;opacity:0;transition:all .3s;pointer-events:none}
     .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
@@ -305,7 +333,12 @@
 
   <script>
     /* ============================================================
-       无墙之门 · Newsroom Studio — v3
+       无墙之门 · Newsroom Studio — v9 (整页可编辑)
+       改动（相对 v8）：
+       1. 整页所有可见文字都可 contenteditable 编辑（标题 / 段落 / 标签 / 水印 / 空状态）
+       2. iOS Safari focus 兼容性：outline:none !important + tap-highlight transparent
+       3. 加 cache-control meta，确保刷新拉新版本
+       4. 所有 .edit 元素加 hover/focus 视觉提示（hover 浅灰底，focus 黄色高亮 + 黑色下划线）
        改动（相对 v2）：
        1. 修复手机端显示
        2. 删除"思维导图"模块（state / tab / panel / view / 相关函数全移除）
@@ -351,6 +384,10 @@
       sideStats1Value: '__COUNT__',
       sideStats2Label: '进行中',
       sideStats2Value: '__ACTIVE__',
+      sideEmptyMsg: '暂时还没有副业条目。用左边表单添加第一条。',
+      sideDateToday: '今天 {time}',
+      waterMark: '无墙之门',
+      navBrand: 'Newsroom Studio',
       sideEntries: '__ENTRIES__',
       style: 'normal',
       bodySize: 16,
@@ -508,6 +545,9 @@
         else if (key === 'sideSubTag') state.sideSubTag = txt;
         else if (key === 'sideStats1Label') state.sideStats1Label = txt;
         else if (key === 'sideStats2Label') state.sideStats2Label = txt;
+        else if (key === 'sideEmptyMsg') state.sideEmptyMsg = txt;
+        else if (key === 'waterMark') state.waterMark = txt;
+        else if (key === 'navBrand') state.navBrand = txt;
       });
       // 副业条目 inline 编辑
       document.querySelectorAll('.editable[contenteditable][data-edit]').forEach(el => {
@@ -702,7 +742,7 @@
         `<section class="work">` +
           bar('新闻排版预览', 'news-card', '新闻排版') +
           `<article id="news-card" class="paper">
-            <span class="water">无墙之门</span>
+            <span class="water edit" contenteditable="true" data-edit="waterMark">${esc(state.waterMark || '无墙之门')}</span>
             <div class="mast">
               <span class="edit" contenteditable="true" data-edit="mastLeft">${esc(state.mastLeft)}</span>
               <b class="edit" contenteditable="true" data-edit="name">${esc(state.name)}</b>
@@ -735,7 +775,7 @@
         `<section class="work">` +
           bar('3:4 文章版', 'story-card', '写文章') +
           `<article id="story-card" class="story">
-            <span class="water">无墙之门</span>
+            <span class="water edit" contenteditable="true" data-edit="waterMark">${esc(state.waterMark || '无墙之门')}</span>
             ${filePicker('writerImage', '文章配图')}
             <div>
               <small class="tag edit" contenteditable="true" data-edit="storyTag">${esc(state.storyTag)}</small>
@@ -765,7 +805,7 @@
       const activeCount = entries.length;
 
       const listHtml = entries.length === 0 ?
-        `<div class="sp-empty">暂时还没有副业条目。用左边表单添加第一条。</div>` :
+        `<div class="sp-empty edit" contenteditable="true" data-edit="sideEmptyMsg">${esc(state.sideEmptyMsg || '暂时还没有副业条目。用左边表单添加第一条。')}</div>` :
         entries.map(e => `
           <div class="sp-item" data-id="${e.id}">
             <span class="date">${esc(e.date)}</span>
@@ -968,6 +1008,9 @@
           else if (key === 'sideSubTag') state.sideSubTag = el.textContent;
           else if (key === 'sideStats1Label') state.sideStats1Label = el.textContent;
           else if (key === 'sideStats2Label') state.sideStats2Label = el.textContent;
+          else if (key === 'sideEmptyMsg') state.sideEmptyMsg = el.textContent;
+          else if (key === 'waterMark') state.waterMark = el.textContent;
+          else if (key === 'navBrand') state.navBrand = el.textContent;
           save();
         };
         el.onblur = () => pushHistory();
