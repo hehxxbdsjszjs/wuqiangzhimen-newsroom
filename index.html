@@ -4,9 +4,13 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="无墙之门" />
+  <meta name="theme-color" content="#20221f" />
   <meta name="format-detection" content="telephone=no" />
   <title>无墙之门 · Newsroom Studio</title>
+  <link rel="apple-touch-icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxODAiIGhlaWdodD0iMTgwIiB2aWV3Qm94PSIwIDAgMTgwIDE4MCI+PHJlY3Qgd2lkdGg9IjE4MCIgaGVpZ2h0PSIxODAiIGZpbGw9IiMyMDIyMWYiLz48Y2lyY2xlIGN4PSI5MCIgY3k9IjkwIiByPSI2MCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZDViOTZmIiBzdHJva2Utd2lkdGg9IjIiLz48dGV4dCB4PSI5MCIgeT0iMTAwIiBmb250LWZhbWlseT0iR2VvcmdpYSIgZm9udC1zaXplPSIzMiIgZmlsbD0iI2Q1Yjk2ZiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC13ZWlnaHQ9ImJvbGQiPuatjeW8gizovIM8L3RleHQ+PC9zdmc+" />
   <style>
     :root{
       --ink:#181917;
@@ -19,10 +23,10 @@
       --body-size:16px;
     }
     *{box-sizing:border-box}
-    body{margin:0;background:#dedcd5;color:var(--ink);font-family:Georgia,"PingFang SC",Arial,sans-serif}
+    body{margin:0;background:#dedcd5;color:var(--ink);font-family:Georgia,"PingFang SC",Arial,sans-serif;overscroll-behavior-y:none;-webkit-tap-highlight-color:transparent}
 
     /* ===== 导航 ===== */
-    .nav{height:58px;background:var(--dark);color:#f7f3e9;display:flex;align-items:center;padding:0 16px;gap:12px;position:sticky;top:0;z-index:50}
+    .nav{height:58px;background:var(--dark);color:#f7f3e9;display:flex;align-items:center;padding:0 16px;padding-top:env(safe-area-inset-top);gap:12px;position:sticky;top:0;z-index:50}
     .mark{border:1px solid #e9e2d0;font:22px Georgia;padding:1px 7px;flex-shrink:0}
     .brand{font:15px Georgia;white-space:nowrap;flex-shrink:0}
     .tabs{display:flex;height:100%;gap:4px;overflow-x:auto;-webkit-overflow-scrolling:touch;flex-shrink:1;min-width:0}
@@ -70,7 +74,7 @@
 
     /* ===== 工作区 ===== */
     .work{overflow:auto;flex:1;position:relative}
-    .bar{height:50px;background:#e7e4da;border-bottom:1px solid #c4c0b7;display:flex;align-items:center;padding:0 26px;gap:10px;font-size:13px;font-weight:bold;position:sticky;top:0;z-index:10}
+    .bar{height:50px;background:#e7e4da;border-bottom:1px solid #c4c0b7;display:flex;align-items:center;padding:0 26px;padding-bottom:env(safe-area-inset-bottom);gap:10px;font-size:13px;font-weight:bold;position:sticky;top:0;z-index:10}
     .bar button{border:0;padding:8px 13px;background:#272925;color:#fff;font-size:12px;cursor:pointer;border-radius:2px;transition:background .15s}
     .bar button:hover{background:#3a3c38}
     .bar button+button{background:#79533c}
@@ -169,65 +173,89 @@
 
     /* ===== 手机端（修复一） ===== */
     @media(max-width:768px){
-      body{font-size:14px}
-      .nav{padding:0 10px;gap:6px;height:52px}
+      body{font-size:15px;-webkit-text-size-adjust:100%}
+      .nav{padding:0 10px;padding-top:env(safe-area-inset-top);gap:6px;height:calc(52px + env(safe-area-inset-top))}
       .mark{padding:0 6px;font-size:18px}
       .brand{display:none}
       .tabs{gap:2px;overflow-x:auto;-webkit-overflow-scrolling:touch}
-      .tabs button{padding:0 10px;font-size:13px;min-width:0;flex-shrink:0}
-      .undo-btn{padding:5px 8px;font-size:11px}
-      .panel-toggle{display:flex;align-items:center;justify-content:center;width:34px;height:34px;background:transparent;border:1px solid #555850;color:#ddd6c8;border-radius:2px;cursor:pointer;margin-right:6px}
-      .panel-toggle svg{width:18px;height:18px;display:block}
+      .tabs button{padding:0 12px;font-size:14px;min-width:0;flex-shrink:0;min-height:44px}
+      .undo-btn{padding:8px 12px;font-size:12px;min-height:44px}
+      .panel-toggle{display:flex;align-items:center;justify-content:center;width:40px;height:40px;background:transparent;border:1px solid #555850;color:#ddd6c8;border-radius:4px;cursor:pointer;margin-right:6px;-webkit-tap-highlight-color:transparent}
+      .panel-toggle svg{width:20px;height:20px;display:block}
 
-      .panel{padding:10px 12px;max-height:60vh;flex-direction:column;overflow-y:auto;transition:max-height .25s ease}
-      .panel.collapsed{max-height:0;padding:0 12px;border-bottom:0;overflow:hidden}
-      .panel-section{min-width:100%;border-right:0;border-bottom:1px solid #555850;padding:10px 0}
+      .panel{padding:12px 14px;max-height:65vh;flex-direction:column;overflow-y:auto;-webkit-overflow-scrolling:touch;transition:max-height .3s ease}
+      .panel.collapsed{max-height:0;padding:0 14px;border-bottom:0;overflow:hidden}
+      .panel-section{min-width:100%;border-right:0;border-bottom:1px solid #555850;padding:12px 0}
       .panel-section:last-child{border-bottom:0}
-      .label textarea{height:60px;font-size:11px}
-      .label input,.label textarea,.label select{font-size:12px}
-      .label{font-size:10px}
+      .panel-section b{font-size:14px}
+      .label{font-size:12px;gap:6px}
+      .label input,.label textarea,.label select{font-size:16px !important;padding:10px 12px;border-radius:4px}
+      .label textarea{height:80px;font-size:16px !important;line-height:1.5}
+      .note{font-size:12px}
 
-      .bar{padding:0 10px;height:42px;gap:6px}
-      .bar button{padding:6px 9px;font-size:10px}
+      .buttons button{padding:10px 6px;font-size:13px;min-height:44px}
+      .panel-btn{padding:12px;font-size:13px;min-height:44px}
+      .preset{width:32px;height:32px}
+      .color-row input[type=color]{width:40px;height:36px}
+      .add-btn{padding:12px;font-size:14px;min-height:44px}
+      .entry-row button{padding:6px 10px;font-size:13px}
+
+      .bar{padding:0 10px;padding-bottom:env(safe-area-inset-bottom);height:calc(48px + env(safe-area-inset-bottom));gap:6px}
+      .bar button{padding:10px 14px;font-size:13px;min-height:44px;border-radius:4px}
       .bar>span{font-size:12px;max-width:50%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-      .bar button{padding:7px 10px;font-size:11px}
-      .work{padding-bottom:80px}
+      .work{padding-bottom:calc(80px + env(safe-area-inset-bottom))}
 
-      .paper{width:calc(100% - 12px);margin:8px auto;padding:14px 12px 120px}
+      .paper{width:calc(100% - 12px);margin:8px auto;padding:16px 14px 130px;border-radius:2px}
       .water{right:10px;bottom:8px;font-size:10px;letter-spacing:2px;opacity:.2}
-      .mast{font-size:9px;gap:6px;flex-wrap:nowrap}
-      .mast b{font-size:17px;letter-spacing:-1px;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-      .paper h1{font-size:34px;letter-spacing:-1.5px}
+      .mast{font-size:10px;gap:6px;flex-wrap:nowrap}
+      .mast b{font-size:20px;letter-spacing:-1px;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+      .paper h1{font-size:32px;letter-spacing:-1.5px}
       .deck{font-size:15px}
-      .cols{columns:1 !important;font-size:15px}
-      .hero{max-width:240px;margin:14px auto;width:100%}
+      .cols{columns:1 !important;font-size:16px;line-height:1.7}
+      .cols p{margin-bottom:1.1em}
+      .edit{padding:4px;border-radius:2px}
+      .edit:focus{border:1px dashed var(--red);border-radius:2px}
+      .hero{max-width:220px;margin:14px auto;width:100%;border-radius:2px}
       .hero b{font-size:14px}
-      .hero small{font-size:10px}
+      .hero small{font-size:11px}
+      .by{font-size:12px;padding:8px 0}
+      .kicker{font-size:12px}
 
-      .story{grid-template-columns:1fr;padding:18px 14px 120px;margin:14px auto;width:calc(100% - 16px)}
-      .story .hero{max-width:260px;margin:auto}
-      .story h1{font-size:28px}
+      .story{grid-template-columns:1fr;padding:20px 16px 130px;margin:12px auto;width:calc(100% - 12px);border-radius:2px}
+      .story .hero{max-width:240px;margin:auto}
+      .story h1{font-size:26px}
+      .story p{font-size:16px;line-height:1.7}
+      .story small.tag{font-size:13px}
 
       .sp-shell{width:100%;margin:0;border-radius:0;box-shadow:none}
-      .sp-mast-band{padding:10px 16px;font-size:11px;gap:8px}
-      .sp-mast-band .sp-mark{font-size:14px}
+      .sp-mast-band{padding:12px 16px;font-size:12px;gap:8px;padding-top:calc(12px + env(safe-area-inset-top))}
+      .sp-mast-band .sp-mark{font-size:15px}
       .sp-mast-band .meta{display:none}
-      .sp-body{grid-template-columns:1fr;padding:18px 16px 120px;gap:18px}
+      .sp-body{grid-template-columns:1fr;padding:20px 16px 130px;gap:18px}
       .sp-image-col{padding-right:0;border-right:0;border-bottom:1px solid #d8d8d8;padding-bottom:16px}
       .sp-content-col{padding-left:0}
-      .sp-title-edit{font-size:28px}
-      .sp-stats-line{gap:18px;padding:8px 0}
-      .sp-stats-line b{font-size:14px}
-      .sp-item{padding:13px 0;gap:10px}
-      .sp-item .date{font-size:10px;min-width:50px}
-      .sp-item .title{font-size:15px}
-      .sp-item .preview{font-size:12px}
-      .sp-item .delete-btn{font-size:16px;padding:0 4px}
+      .sp-title-edit{font-size:26px}
+      .sp-tag-edit{font-size:12px}
+      .sp-stats-line{gap:20px;padding:10px 0}
+      .sp-stats-line b{font-size:15px}
+      .sp-item{padding:14px 0;gap:10px;min-height:44px}
+      .sp-item .date{font-size:11px;min-width:50px}
+      .sp-item .title{font-size:16px}
+      .sp-item .preview{font-size:13px}
+      .sp-item .delete-btn{font-size:20px;padding:8px;min-width:36px;min-height:36px}
       .sp-empty{padding:32px 0}
+      .sp-form-row{grid-template-columns:1fr;gap:6px}
 
-      .stamp-wrap{width:92px;height:92px;bottom:18px}
+      .stamp-wrap{width:88px;height:88px;bottom:16px}
       .stamp-text{font-size:6.8px;letter-spacing:3.5px}
       .stamp-text-bottom{font-size:6.6px;letter-spacing:3px}
+
+      .toast{bottom:calc(24px + env(safe-area-inset-bottom));font-size:15px;padding:14px 28px;max-width:90vw}
+    }
+
+    @media(max-width:768px) and (display-mode:standalone){
+      .nav{padding-top:env(safe-area-inset-top)}
+      body{overscroll-behavior-y:none}
     }
 
     @media print{
@@ -1031,6 +1059,66 @@
       const p = document.getElementById('appPanel');
       if (p && !panelUserExpanded) p.classList.add('collapsed');
     }
+
+    // ---- Add to Home Screen hint (shows once on iPhone) ----
+    (function(){
+      var shown = false;
+      try { shown = localStorage.getItem('a2hs_dismissed') === '1'; } catch(e){}
+      if (shown) return;
+      function isIOS(){ return /iPhone|iPad|iPod/.test(navigator.userAgent) && !window.MSStream; }
+      function isStandalone(){ return window.navigator.standalone === true || window.matchMedia('(display-mode:standalone)').matches; }
+      if (!isIOS() || isStandalone()) return;
+      setTimeout(function(){
+        var hint = document.createElement('div');
+        hint.id = 'a2hs-hint';
+        hint.style.cssText = 'position:fixed;bottom:calc(20px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);background:#20221f;color:#f7f3e9;padding:16px 20px;border-radius:12px;font-size:14px;z-index:9998;max-width:90vw;box-shadow:0 4px 24px rgba(0,0,0,.4);display:flex;align-items:center;gap:12px;font-family:-apple-system,system-ui,sans-serif;line-height:1.5;transition:opacity .4s,transform .4s';
+        hint.innerHTML = '<div style="flex:1;min-width:0"><b style="color:#d5b96f;font-size:13px">\u2B50 \u6DFB\u52A0\u5230\u4E3B\u5C4F</b><br><span style="font-size:12px;color:#bbb7ae">\u70B9\u51FB\u5E95\u90E8\u5206\u4EAB\u6309\u94AE \u2192 \u300C\u6DFB\u52A0\u5230\u4E3B\u5C4F\u5E55\u300D</span></div><button id="a2hs-close" style="background:none;border:0;color:#888;font-size:22px;padding:0 4px;cursor:pointer;flex-shrink:0">\u00D7</button>';
+        document.body.appendChild(hint);
+        var closeBtn = document.getElementById('a2hs-close');
+        if (closeBtn) closeBtn.addEventListener('click', function(){
+          hint.style.opacity = '0';
+          hint.style.transform = 'translateX(-50%) translateY(20px)';
+          setTimeout(function(){ hint.remove(); }, 400);
+          try { localStorage.setItem('a2hs_dismissed', '1'); } catch(e){}
+        });
+        setTimeout(function(){
+          if (hint && hint.parentNode) {
+            hint.style.opacity = '0';
+            setTimeout(function(){ if(hint && hint.parentNode) hint.remove(); }, 400);
+          }
+        }, 12000);
+      }, 2500);
+    })();
+
+    // ---- Add to Home Screen hint (shows once on iPhone) ----
+    (function(){
+      var shown = false;
+      try { shown = localStorage.getItem('a2hs_dismissed') === '1'; } catch(e){}
+      if (shown) return;
+      function isIOS(){ return /iPhone|iPad|iPod/.test(navigator.userAgent) && !window.MSStream; }
+      function isStandalone(){ return window.navigator.standalone === true || window.matchMedia('(display-mode:standalone)').matches; }
+      if (!isIOS() || isStandalone()) return;
+      setTimeout(function(){
+        var hint = document.createElement('div');
+        hint.id = 'a2hs-hint';
+        hint.style.cssText = 'position:fixed;bottom:calc(20px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);background:#20221f;color:#f7f3e9;padding:16px 20px;border-radius:12px;font-size:14px;z-index:9998;max-width:90vw;box-shadow:0 4px 24px rgba(0,0,0,.4);display:flex;align-items:center;gap:12px;font-family:-apple-system,system-ui,sans-serif;line-height:1.5;transition:opacity .4s,transform .4s';
+        hint.innerHTML = '<div style="flex:1;min-width:0"><b style="color:#d5b96f;font-size:13px">\u2B50 \u6DFB\u52A0\u5230\u4E3B\u5C4F</b><br><span style="font-size:12px;color:#bbb7ae">\u70B9\u51FB\u5E95\u90E8\u5206\u4EAB\u6309\u94AE \u2192 \u300C\u6DFB\u52A0\u5230\u4E3B\u5C4F\u5E55\u300D</span></div><button id="a2hs-close" style="background:none;border:0;color:#888;font-size:22px;padding:0 4px;cursor:pointer;flex-shrink:0">\u00D7</button>';
+        document.body.appendChild(hint);
+        var closeBtn = document.getElementById('a2hs-close');
+        if (closeBtn) closeBtn.addEventListener('click', function(){
+          hint.style.opacity = '0';
+          hint.style.transform = 'translateX(-50%) translateY(20px)';
+          setTimeout(function(){ hint.remove(); }, 400);
+          try { localStorage.setItem('a2hs_dismissed', '1'); } catch(e){}
+        });
+        setTimeout(function(){
+          if (hint && hint.parentNode) {
+            hint.style.opacity = '0';
+            setTimeout(function(){ if(hint && hint.parentNode) hint.remove(); }, 400);
+          }
+        }, 12000);
+      }, 2500);
+    })();
   </script>
 </body>
 </html>
