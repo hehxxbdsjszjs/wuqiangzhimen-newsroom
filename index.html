@@ -115,9 +115,10 @@
     .sp-mast-band .sp-divider{color:#666;font-weight:normal}
     .sp-mast-band .meta{margin-left:auto;font:11px Arial;letter-spacing:1.2px;color:#bdbdbd;font-weight:normal}
 
-    .sp-body{display:grid;grid-template-columns:3fr 4fr;gap:0;padding:26px 28px 130px;min-width:0}
-    .sp-image-col{display:flex;flex-direction:column;gap:14px;padding-right:22px;border-right:1px solid #d8d8d8}
-    .sp-image-col .hero{margin:0;width:100%}
+    .sp-body{display:flex;flex-direction:column;padding:26px 28px 130px;min-width:0;gap:20px}
+    .sp-header{display:flex;flex-direction:column}
+    .sp-image-block{display:flex;justify-content:center;align-items:center;width:100%}
+    .sp-image-block .hero{margin:0 auto;width:100%;max-width:520px}
     .sp-tag-edit{font:bold 11px Arial;color:#000;letter-spacing:1.6px;display:block;margin-bottom:10px;outline:0;padding:2px 0;transition:background .12s}
     .sp-tag-edit:focus{outline:0;box-shadow:inset 0 -1.5px 0 0 #000}
     .sp-title-edit{
@@ -137,6 +138,19 @@
     .sp-title-edit::before{content:"→ ";color:#fff;font-weight:400;margin-right:6px;opacity:.85}
 
     .sp-content-col{display:flex;flex-direction:column;padding-left:22px;min-width:0}
+    .sp-writer{
+      font:15px/1.85 -apple-system,BlinkMacSystemFont,"PingFang SC","Helvetica Neue",sans-serif;
+      color:#1a1a1a;
+      min-height:360px;
+      outline:0;
+      padding:18px 4px;
+      letter-spacing:.2px;
+      cursor:text;
+    }
+    .sp-writer p{margin:0 0 16px;line-height:1.85}
+    .sp-writer p:last-child{margin-bottom:0}
+    .sp-writer:empty::before{content:attr(data-placeholder);color:#b0b0b0;font-style:italic}
+    .sp-writer:focus{outline:0}
     .sp-list{display:flex;flex-direction:column}
     .sp-item{padding:16px 0;border-bottom:1px solid #e2e2e2;display:grid;grid-template-columns:auto 1fr auto;gap:14px;align-items:start;transition:background .15s;cursor:text}
     .sp-item:first-child{padding-top:6px}
@@ -275,8 +289,8 @@
       .sp-mast-band .sp-mark{font-size:15px}
       .sp-mast-band .meta{display:none}
       .sp-body{grid-template-columns:1fr;padding:20px 16px 130px;gap:18px}
-      .sp-image-col{padding-right:0;border-right:0;border-bottom:1px solid #d8d8d8;padding-bottom:16px}
-      .sp-content-col{padding-left:0}
+      .sp-image-block .hero{max-width:100%}
+      .sp-writer{min-height:240px;font-size:15px}
       .sp-title-edit{font-size:26px}
       .sp-tag-edit{font-size:12px}
       .sp-title-edit{font-size:18px;padding:12px 18px}
@@ -331,7 +345,7 @@ if ('serviceWorker' in navigator) {
   <nav class="nav">
     <span class="mark">N</span>
     <span class="brand">Newsroom Studio</span>
-    <span style="font-size:9px;color:#999;background:#f0f0f0;padding:1px 6px;border-radius:3px;margin-left:4px">v14</span>
+    <span style="font-size:9px;color:#999;background:#f0f0f0;padding:1px 6px;border-radius:3px;margin-left:4px">v15</span>
     <div class="tabs">
       <button data-tab="news" class="on">新闻排版</button>
       <button data-tab="write">写文章</button>
@@ -386,6 +400,7 @@ if ('serviceWorker' in navigator) {
       sideMetaPrefix: 'FROM YOUR STUDIO · 共 ',
       sideMetaSuffix: ' 条',
       sideSubTag: '副业笔记 / SIDE PROJECTS',
+      sideArticle: '',
       kicker: '商业与市场 / 深度报道',
       deck: '用清晰、克制的报纸版式，让每一段重要叙述都有呼吸的空间。',
       byline: '记者：编辑部',
@@ -952,20 +967,7 @@ if ('serviceWorker' in navigator) {
       const entries = state.sideEntries || [];
       const activeCount = entries.length;
 
-      const listHtml = entries.length === 0 ?
-        `<div class="sp-empty edit" contenteditable="true" data-edit="sideEmptyMsg">${esc(state.sideEmptyMsg || '暂时还没有副业条目。用左边表单添加第一条。')}</div>` :
-        entries.map(e => `
-          <div class="sp-item" data-id="${e.id}">
-            <span class="date editable" contenteditable="true" data-edit="entry-date" data-id="${e.id}" data-placeholder="日期">${esc(e.date)}</span>
-            <div class="body">
-              <div class="title editable" contenteditable="true" data-edit="entry-title" data-id="${e.id}" data-placeholder="给这件事起个标题…">${esc(e.title)}</div>
-              <div class="preview editable" contenteditable="true" data-edit="entry-preview" data-id="${e.id}" data-placeholder="两行备注（可选）">${esc(e.preview || '')}</div>
-            </div>
-            <div class="key">
-              <button class="delete-btn" onclick="delSideEntry('${e.id}')" title="删除">×</button>
-            </div>
-          </div>
-        `).join('');
+      const articleHtml = state.sideArticle || '';
 
       return `<div class="tool">` +
         panel(`<div class="panel-section">
@@ -992,7 +994,7 @@ if ('serviceWorker' in navigator) {
         styleControls()
         ) +
         `<section class="work">` +
-          bar('写副业 · 副业笔记', 'sideproject-card', '副业笔记') +
+          bar('写副业 · 副业文章', 'sideproject-card', '副业文章') +
           `<article id="sideproject-card" class="sp-shell">
             <div class="sp-mast-band">
               <span class="sp-mark sp-mast-edit edit" contenteditable="true" data-edit="sideMastLeft">${esc(state.sideMastLeft || '副业')}</span>
@@ -1001,16 +1003,14 @@ if ('serviceWorker' in navigator) {
               <span class="meta"><span class="sp-mast-edit edit" contenteditable="true" data-edit="sideMetaPrefix">${esc(state.sideMetaPrefix || 'FROM YOUR STUDIO · 共 ')}</span>${entries.length}<span class="sp-mast-edit edit" contenteditable="true" data-edit="sideMetaSuffix">${esc(state.sideMetaSuffix || ' 条')}</span></span>
             </div>
             <div class="sp-body">
-              <div class="sp-image-col">
-                ${filePicker('sideImage', '副业配图')}
+              <div class="sp-header">
                 <small class="sp-tag-edit edit" contenteditable="true" data-edit="sideSubTag">${esc(state.sideSubTag || '副业笔记 / SIDE PROJECTS')}</small>
                 <h1 class="sp-title-edit edit" contenteditable="true" data-edit="sideTitle" data-placeholder="副业笔记">${esc(state.sideSection || '副业笔记')}</h1>
               </div>
-              <div class="sp-content-col">
-                <div class="sp-list">
-                  ${listHtml}
-                </div>
+              <div class="sp-image-block">
+                ${filePicker('sideImage', '副业配图')}
               </div>
+              <div class="sp-writer" id="sideWriter" contenteditable="true" data-edit="sideArticle" data-placeholder="粘贴或输入副业文章内容…自动按段落排版。">${articleHtml}</div>
             </div>
             ${stampSvg()}
           </article>` +
@@ -1180,6 +1180,45 @@ if ('serviceWorker' in navigator) {
         };
         el.onblur = () => pushHistory();
       });
+
+      // 副业写作区：粘贴自动排版（按段落 + 行内换行）
+      const writerEl = document.getElementById('sideWriter');
+      if (writerEl) {
+        writerEl.onpaste = (e) => {
+          e.preventDefault();
+          const cd = e.clipboardData || window.clipboardData;
+          if (!cd) return;
+          const text = cd.getData('text/plain') || '';
+          if (!text) return;
+          // 段落 = 双换行分割；行内换行 = <br>
+          const paras = text.split(/\n{2,}/).map(p => p.trim()).filter(Boolean);
+          const html = paras.map(p => '<p>' + p.split(/\n/).map(l => esc(l)).join('<br>') + '</p>').join('');
+          const sel = window.getSelection();
+          if (sel && sel.rangeCount) {
+            const range = sel.getRangeAt(0);
+            range.deleteContents();
+            const frag = document.createRange().createContextualFragment(html);
+            const lastNode = frag.lastChild;
+            range.insertNode(frag);
+            // 把光标移到插入内容末尾
+            if (lastNode) {
+              range.setStartAfter(lastNode);
+              range.collapse(true);
+              sel.removeAllRanges();
+              sel.addRange(range);
+            }
+          } else {
+            writerEl.insertAdjacentHTML('beforeend', html);
+          }
+          state.sideArticle = writerEl.innerHTML;
+          save();
+        };
+        writerEl.oninput = () => {
+          state.sideArticle = writerEl.innerHTML;
+          save();
+        };
+        writerEl.onblur = () => pushHistory();
+      }
     }
 
     // ---- 实时更新预览（不 re-render）----
