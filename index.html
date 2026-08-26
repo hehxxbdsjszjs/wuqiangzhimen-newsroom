@@ -121,16 +121,14 @@
     .edit{outline:0;cursor:text;border:1px dashed transparent;transition:border-color .15s}
     .edit:focus{border-color:var(--red);background:#fffdf7}
 
-    /* ===== v18：水平横杠（分隔线） =====
-       横贯三个板块（新闻 / 写文章 / 写副业）的统一分隔线。
-       新闻板块需在多栏内优雅断行；写文章 / 写副业是单栏全宽。
-       用 margin + 纯色细线保证不会被 columns 切碎。 */
+    /* ===== v22：水平横杠（柔和渐变 · 居中缩短） =====
+       横杠不占满全宽，两边渐变淡出，整体更虚更柔和。
+       用 ::after 伪元素画渐变线，<hr> 本身只做占位。 */
     .hr-md{
       display:block !important;
       width:100%;
-      height:0;
+      height:1px;
       border:0;
-      border-top:1.5px solid var(--ink);
       margin:1.4em 0;
       background:transparent;
       column-span:all;
@@ -140,17 +138,29 @@
       cursor:default;
       outline:0;
       position:relative;
+      overflow:visible;
     }
-    /* hover 时提示"这是一个分割线" */
-    .hr-md:hover{border-top-color:var(--red)}
-    /* 副业卡片背景偏白，让横杠更醒目 */
-    .sp-writer .hr-md{border-top-width:1.5px;border-top-color:#111}
+    .hr-md::after{
+      content:"";
+      display:block;
+      width:42%;
+      max-width:180px;
+      height:1px;
+      margin:0 auto;
+      border:0;
+      background:linear-gradient(to right, transparent, rgba(0,0,0,0.16), transparent);
+      border-radius:1px;
+    }
+    /* hover 时不改变颜色，保持柔和 */
+    .hr-md:hover{}
+    /* 副业卡片背景偏白，用稍深一点的灰 */
+    .sp-writer .hr-md::after{background:linear-gradient(to right, transparent, rgba(0,0,0,0.18), transparent)}
     /* 写文章卡片间距大一些 */
     .story .edit .hr-md{margin:1.6em 0}
     /* 让横杠在多栏排版里完整显示，不被截到下一栏 */
     .cols .hr-md{-webkit-column-break-after:avoid;column-break-after:avoid}
     /* 不要给 hr 加 contenteditable 边框 */
-    .hr-md.edit{border-top-style:solid}
+    .hr-md.edit{border:0}
 
     /* ===== 副业版（黑白调 · 参考 WSJ Markets 顶部黑带 + 写文章双栏格局） ===== */
     .sp-shell{position:relative;width:min(700px,calc(100% - 40px));margin:40px auto 40px;background:#fff;display:grid;grid-template-rows:auto 1fr;box-shadow:0 8px 26px rgba(0,0,0,.25);color:#111;overflow:hidden}
