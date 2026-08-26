@@ -5,7 +5,7 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
-  <meta name="app-version" content="v10-persistent">
+  <meta name="app-version" content="v16-stable">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="mobile-web-app-capable" content="yes" />
@@ -96,11 +96,22 @@
     .paper h1{font:clamp(38px,5vw,64px)/1 Georgia,serif;letter-spacing:-2.6px;margin:14px 0}
     .deck{font:18px/1.42 Georgia;max-width:720px}
     .by{border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:9px 0;font-size:11px;color:#615c54}
-    .hero{width:min(100%,310px);aspect-ratio:3/4;margin:25px auto;background:#dfdbd0;border:1px solid #aaa394;display:grid;place-items:center;text-align:center;overflow:hidden;cursor:pointer;transition:border-color .15s}
+    .hero{width:min(100%,310px);aspect-ratio:3/4;margin:25px auto;background:#dfdbd0;border:1px solid #aaa394;display:grid;place-items:center;text-align:center;overflow:hidden;cursor:pointer;transition:border-color .15s;position:relative}
     .hero:hover{border-color:var(--red)}
     .hero img{width:100%;height:100%;object-fit:cover}
     .hero b{font:16px Georgia}
     .hero small{font-size:11px;color:#888}
+    /* 图片删除按钮 */
+    .hero-del{position:absolute;top:6px;right:6px;width:28px;height:28px;border-radius:50%;background:rgba(0,0,0,.58);color:#fff;border:0;font-size:16px;line-height:1;cursor:pointer;z-index:3;display:flex;align-items:center;justify-content:center;padding:0;transition:background .15s}
+    .hero-del:hover{background:rgba(0,0,0,.85)}
+    /* 无图时的紧凑占位（不占大空白，导出/打印时隐藏） */
+    .hero.empty{aspect-ratio:auto;height:64px;margin:12px auto;background:transparent;border:1px dashed #aaa394;display:flex;align-items:center;justify-content:center;color:#888;font:13px Georgia;letter-spacing:.5px;cursor:pointer;padding:0 10px}
+    .hero.empty:hover{color:var(--red);border-color:var(--red)}
+    .hero.empty .hero-empty{display:flex;align-items:center;gap:8px}
+    /* 空段落 / 空块不占位：删除内容后自动向上补位（聚焦时保留以便继续输入） */
+    .cols p[data-edit="articleP"]:empty:not(:focus),
+    .story .edit p:empty:not(:focus),
+    .sp-writer p:empty:not(:focus){display:none}
     .cols{column-gap:34px;column-rule:1px solid #d0cabd;font:var(--body-size)/1.65 Georgia,"PingFang SC",serif;text-align:justify}
     .cols p{break-inside:avoid;margin-top:0;margin-bottom:1em}
     .edit{outline:0;cursor:text;border:1px dashed transparent;transition:border-color .15s}
@@ -131,15 +142,13 @@
       word-break:break-word;
       box-shadow:0 2px 0 0 #000;
     }
-    .sp-title-edit::before{content:"\2192";display:inline-block;margin-right:10px;font:bold 26px/1 Georgia,sans-serif;color:#fff;opacity:.9}
     .sp-title-edit:focus{outline:0;background:#000;color:#fff;box-shadow:0 3px 0 0 #000}
     .sp-title-edit:empty::before{content:attr(data-placeholder);color:rgba(255,255,255,.5);font-style:italic}
     .sp-title-edit{outline:0;display:inline-block;padding:14px 22px;background:#000;color:#fff;font:bold 24px/1 "PingFang SC","Noto Serif SC",serif;letter-spacing:1px;box-shadow:0 2px 0 0 #000;cursor:text;max-width:100%;box-sizing:border-box;position:relative}
-    .sp-title-edit::before{content:"→ ";color:#fff;font-weight:400;margin-right:6px;opacity:.85}
 
     .sp-content-col{display:flex;flex-direction:column;padding-left:22px;min-width:0}
     .sp-writer{
-      font:15px/1.85 -apple-system,BlinkMacSystemFont,"PingFang SC","Helvetica Neue",sans-serif;
+      font:var(--body-size)/1.85 -apple-system,BlinkMacSystemFont,"PingFang SC","Helvetica Neue",sans-serif;
       color:#1a1a1a;
       min-height:360px;
       outline:0;
@@ -268,11 +277,12 @@
       .mast b{font-size:20px;letter-spacing:-1px;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
       .paper h1{font-size:32px;letter-spacing:-1.5px}
       .deck{font-size:15px}
-      .cols{columns:1 !important;font-size:16px;line-height:1.7}
+      .cols{columns:1 !important;font-size:var(--body-size);line-height:1.7}
       .cols p{margin-bottom:1.1em}
       .edit{padding:4px;border-radius:2px}
       .edit:focus{border:1px dashed var(--red);border-radius:2px}
       .hero{max-width:220px;margin:14px auto;width:100%;border-radius:2px}
+      .hero.empty{height:56px;margin:10px auto;font-size:12px}
       .hero b{font-size:14px}
       .hero small{font-size:11px}
       .by{font-size:12px;padding:8px 0}
@@ -281,7 +291,7 @@
       .story{grid-template-columns:1fr;padding:20px 16px 130px;margin:12px auto;width:calc(100% - 12px);border-radius:2px}
       .story .hero{max-width:240px;margin:auto}
       .story h1{font-size:26px}
-      .story p{font-size:16px;line-height:1.7}
+      .story p{font-size:var(--body-size);line-height:1.7}
       .story small.tag{font-size:13px}
 
       .sp-shell{width:100%;margin:0;border-radius:0;box-shadow:none}
@@ -290,7 +300,7 @@
       .sp-mast-band .meta{display:none}
       .sp-body{grid-template-columns:1fr;padding:20px 16px 130px;gap:18px}
       .sp-image-block .hero{max-width:100%}
-      .sp-writer{min-height:240px;font-size:15px}
+      .sp-writer{min-height:240px;font-size:var(--body-size)}
       .sp-title-edit{font-size:26px}
       .sp-tag-edit{font-size:12px}
       .sp-title-edit{font-size:18px;padding:12px 18px}
@@ -319,6 +329,9 @@
       .tool{display:block}
       .paper,.story{box-shadow:none;width:100%;margin:0;padding:24px}
       .sp-shell{box-shadow:none;width:100%;margin:0}
+      .edit,.editable[contenteditable="true"]{border-color:transparent !important;background:transparent !important;box-shadow:none !important;outline:none !important}
+      .hero.empty{display:none !important}
+      .hero-del{display:none !important}
     }
 
     /* 滚动条美化 */
@@ -345,7 +358,7 @@ if ('serviceWorker' in navigator) {
   <nav class="nav">
     <span class="mark">N</span>
     <span class="brand">Newsroom Studio</span>
-    <span style="font-size:9px;color:#999;background:#f0f0f0;padding:1px 6px;border-radius:3px;margin-left:4px">v15</span>
+    <span style="font-size:9px;color:#999;background:#f0f0f0;padding:1px 6px;border-radius:3px;margin-left:4px">v16</span>
     <div class="tabs">
       <button data-tab="news" class="on">新闻排版</button>
       <button data-tab="write">写文章</button>
@@ -608,13 +621,19 @@ if ('serviceWorker' in navigator) {
 
 
 
-    // ---- 持久化（双重存储）----
+    // ---- 持久化（双重存储；v16 起防抖写入，避免高频输入阻塞 UI）----
+    let _saveTimer = null;
     function save() {
       state._savedAt = Date.now();
       var json = JSON.stringify(state);
       // localStorage 同步存储（快速恢复）
       try { localStorage.setItem(LS_KEY, json); } catch(e) {}
-      // IndexedDB 异步存储（持久化备份）
+      // IndexedDB 异步存储（持久化备份，防抖 300ms）
+      if (_saveTimer) clearTimeout(_saveTimer);
+      _saveTimer = setTimeout(function() { idbSave(state); }, 300);
+    }
+    function saveNow() {
+      if (_saveTimer) { clearTimeout(_saveTimer); _saveTimer = null; }
       idbSave(state);
     }
 
@@ -638,6 +657,111 @@ if ('serviceWorker' in navigator) {
 
     // ---- 工具函数 ----
     const esc = s => String(s == null ? '' : s).replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[m]));
+
+    /* ============================================================
+       v16 新增：内容安全工具函数
+       ------------------------------------------------------------
+       1) extractParagraphs(el)：遍历 DOM，把 <p>/<div>/<br> 等块级边界
+          统一解析成段落数组。不再依赖 querySelectorAll('p')，
+          因此粘贴产生的 <div> 块、手动换行的 <br> 都能被正确捕获，
+          这是修复「导出长图后文章被清空」的关键。
+       2) cleanPastedText(text)：粘贴文本清洗 —— 多余空行 / 连续空白 /
+          全角空格 / 异常换行 / 无用字符，全部整理成规整段落。
+       3) insertCleanParagraphs(container, text)：把清洗后的文本按段落
+          插入可编辑区，统一生成 <p> 结构。
+       4) pruneEmptyBlocks(container)：删除空段落 / 空 div，避免
+          「删除内容后留下巨大空白」。
+       ============================================================ */
+    const BLOCK_TAGS = ['P','DIV','SECTION','ARTICLE','LI','BLOCKQUOTE','H1','H2','H3','H4','H5','H6','TABLE','TR','TD','TH','UL','OL','FIGURE','FIGCAPTION'];
+
+    function extractParagraphs(el) {
+      if (!el) return [];
+      const blocks = [];
+      let buf = '';
+      const flush = () => {
+        const t = buf.replace(/\u00a0/g, ' ').trim();
+        if (t) blocks.push(t);
+        buf = '';
+      };
+      const walk = (node) => {
+        if (node.nodeType === 3) { buf += node.nodeValue; }
+        else if (node.nodeType === 1) {
+          const tag = node.tagName;
+          if (tag === 'BR') { flush(); }
+          else if (tag === 'IMG') {
+            // 保留图片占位文本，避免内嵌图片被静默丢弃
+            buf += ' [图片] ';
+          }
+          else if (BLOCK_TAGS.indexOf(tag) !== -1) {
+            flush();
+            node.childNodes.forEach(walk);
+            flush();
+          } else {
+            node.childNodes.forEach(walk);
+          }
+        }
+      };
+      walk(el);
+      flush();
+      return blocks;
+    }
+
+    function cleanPastedText(text) {
+      return String(text == null ? '' : text)
+        .replace(/\r\n?/g, '\n')                     // 统一换行
+        .replace(/[\u200b\u200c\u200d\ufeff]/g, '')   // 去掉零宽字符/BOM
+        .replace(/[ \t\u00a0\u3000]{2,}/g, ' ')       // 连续空格/制表/全角空格 → 1 个空格
+        .replace(/\n{3,}/g, '\n\n')                   // 3+ 空行 → 1 个空行
+        .split('\n')
+        .map(l => l.replace(/^[ \t\u3000\u00a0]+|[ \t\u3000\u00a0]+$/g, '')) // 每行去首尾空白
+        .join('\n')
+        .replace(/\n{3,}/g, '\n\n');
+    }
+
+    function paragraphsFromText(text) {
+      // 清洗后按空行切段；段内单个换行 → 空格（中日韩之间不留空格）
+      return cleanPastedText(text)
+        .split(/\n{2,}/)
+        .map(p => p.split('\n').join(' '))
+        .map(p => p.replace(/([\u4e00-\u9fff])\s+([\u4e00-\u9fff])/g, '$1$2').trim())
+        .filter(Boolean);
+    }
+
+    function insertCleanParagraphs(container, text) {
+      const paras = paragraphsFromText(text);
+      if (!paras.length) return;
+      const makeP = (t) => { const p = document.createElement('p'); p.textContent = t; return p; };
+      const sel = window.getSelection();
+      if (sel && sel.rangeCount && sel.getRangeAt(0).intersectsNode(container)) {
+        const range = sel.getRangeAt(0);
+        let anchor = range.startContainer;
+        if (anchor.nodeType === 3) anchor = anchor.parentElement;
+        // 找到光标所在的块级元素，把新段落插到该块「之后」，
+        // 避免把 <p> 嵌套进 <p> 破坏结构
+        let block = anchor;
+        while (block && block !== container && BLOCK_TAGS.indexOf(block.tagName) === -1) block = block.parentElement;
+        const lastNode = makeP(paras[paras.length - 1]);
+        const frag = document.createDocumentFragment();
+        paras.forEach((pt, i) => { frag.appendChild(i === paras.length - 1 ? lastNode : makeP(pt)); });
+        if (block && block !== container) block.after(frag);
+        else container.appendChild(frag);
+        const r = document.createRange();
+        r.setStartAfter(lastNode);
+        r.collapse(true);
+        sel.removeAllRanges();
+        sel.addRange(r);
+      } else {
+        container.insertAdjacentHTML('beforeend', paras.map(t => `<p>${esc(t)}</p>`).join(''));
+      }
+    }
+
+    function pruneEmptyBlocks(container) {
+      if (!container) return;
+      container.querySelectorAll('p,div').forEach(function(b) {
+        if (b === container) return;
+        if (b.children.length === 0 && !b.textContent.trim()) b.remove();
+      });
+    }
 
     function showToast(msg) {
       const t = document.getElementById('toast');
@@ -687,7 +811,9 @@ if ('serviceWorker' in navigator) {
         else if (key === 'title') state.title = txt;
         else if (key === 'writerTitle') state.writerTitle = txt;
         else if (key === 'writerBody') {
-          state.writerText = Array.from(el.querySelectorAll('p')).map(p => p.textContent).join('\n\n');
+          state.writerText = extractParagraphs(el).join('\n\n');
+          const ta = document.querySelector('textarea[data-k="writerText"]');
+          if (ta) ta.value = state.writerText;
         }
         else if (key === 'sideTitle') state.sideSection = txt;
         else if (key === 'kicker') state.kicker = txt;
@@ -725,38 +851,76 @@ if ('serviceWorker' in navigator) {
       save();
     }
 
-    // ---- 高保真长图导出（懒加载 html2canvas）----
+    // ---- 高保真长图导出（懒加载 html2canvas，v16 起多源回退）----
     let _h2cLoaded = false, _h2cLoading = false;
+    const H2C_SOURCES = [
+      'html2canvas.min.js',   // ① 站内同源副本（v16 随站点一起部署，国内访问最快最稳）
+      'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js',
+      'https://unpkg.com/html2canvas@1.4.1/dist/html2canvas.min.js',
+      'https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js'
+    ];
     function loadH2C(cb) {
       if (typeof html2canvas !== 'undefined') { _h2cLoaded = true; cb(); return; }
-      if (_h2cLoading) { showToast('正在加载导出组件…'); return; }
+      if (_h2cLoading) return;
       _h2cLoading = true;
       showToast('正在加载导出组件…');
-      var s = document.createElement('script');
-      s.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
-      s.onload = function() { _h2cLoaded = true; _h2cLoading = false; cb(); };
-      s.onerror = function() {
-        _h2cLoading = false;
-        showToast('导出组件加载失败，请检查网络后重试');
+      let i = 0, timer = null;
+      const tryNext = () => {
+        if (timer) { clearTimeout(timer); timer = null; }
+        if (i >= H2C_SOURCES.length) {
+          _h2cLoading = false;
+          showToast('导出组件加载失败，请检查网络后重试');
+          return;
+        }
+        const src = H2C_SOURCES[i++];
+        const s = document.createElement('script');
+        let done = false;
+        s.src = src;
+        s.onload = function() {
+          if (done) return;
+          if (typeof html2canvas !== 'undefined') {
+            done = true;
+            _h2cLoaded = true; _h2cLoading = false;
+            cb();
+          } else { tryNext(); }
+        };
+        s.onerror = function() { if (!done) tryNext(); };
+        document.head.appendChild(s);
+        // 兜底：8 秒仍未就绪则换下一个源（某些环境下脚本不执行）
+        timer = setTimeout(function() {
+          if (!done && typeof html2canvas === 'undefined') {
+            try { s.remove(); } catch(e) {}
+            tryNext();
+          }
+        }, 8000);
       };
-      document.head.appendChild(s);
+      tryNext();
     }
 
     function downloadLong(id, fileLabel) {
       loadH2C(function() {
-      // 关键：导出前把所有 contentEditable 内容同步回 state，再 render，确保 DOM = state
+      // v16 修复：导出「只读」当前 DOM，绝不重建页面。
+      // 旧逻辑在这里执行 syncAllToState()+render()，render() 会用
+      // app.innerHTML 整页重建 DOM —— 一旦 state 同步有遗漏（例如粘贴
+      // 产生 <div> 而同步函数只认 <p>），正文就会被重建为空，长图空白。
+      // 现在：内容已经在页面上了，直接截图即可；syncAllToState() 仅
+      // 用于把当前内容持久化，不触碰 DOM。
       syncAllToState();
-      render();
       const node = document.getElementById(id);
       if (!node) return;
       showToast('正在生成长图…');
       const edits = node.querySelectorAll('.edit,.editable[contenteditable="true"]');
       const restore = [];
       edits.forEach(e => {
-        restore.push({e, c: e.style.borderColor});
+        restore.push({e, c: e.style.borderColor, b: e.style.background, s: e.style.boxShadow});
         e.style.borderColor = 'transparent';
         e.style.outline = 'none';
+        e.style.background = 'transparent';
+        e.style.boxShadow = 'none';
       });
+      // 截图期间隐藏：空占位图 / 图片删除按钮（不改变 state，截完恢复）
+      const empties = node.querySelectorAll('.hero.empty, .hero-del');
+      empties.forEach(el => { el.dataset.prevDisplay = el.style.display || ''; el.style.display = 'none'; });
       html2canvas(node, {
         scale: 2,
         useCORS: true,
@@ -766,7 +930,8 @@ if ('serviceWorker' in navigator) {
         windowWidth: node.scrollWidth,
         windowHeight: node.scrollHeight
       }).then(canvas => {
-        restore.forEach(o => o.e.style.borderColor = o.c);
+        restore.forEach(o => { o.e.style.borderColor = o.c; o.e.style.background = o.b; o.e.style.boxShadow = o.s; });
+        empties.forEach(el => { el.style.display = el.dataset.prevDisplay; delete el.dataset.prevDisplay; });
         canvas.toBlob(blob => {
           const title = (node.querySelector('h1') || {}).textContent || '无墙之门';
           const file = new File([blob], '无墙之门-' + (fileLabel || title.slice(0,20)) + '.png', {type:'image/png'});
@@ -782,7 +947,8 @@ if ('serviceWorker' in navigator) {
           showToast('长图已导出');
         }, 'image/png');
       }).catch(err => {
-        restore.forEach(o => o.e.style.borderColor = o.c);
+        restore.forEach(o => { o.e.style.borderColor = o.c; o.e.style.background = o.b; o.e.style.boxShadow = o.s; });
+        empties.forEach(el => { el.style.display = el.dataset.prevDisplay; delete el.dataset.prevDisplay; });
         showToast('导出失败：' + err.message);
       });
       });
@@ -793,11 +959,25 @@ if ('serviceWorker' in navigator) {
       label = label || '主图';
       const hasImg = !!state[key];
       return `<input id="${key}File" type="file" accept="image/*" hidden>` +
-        `<div class="hero" id="${key}Pick" data-key="${key}">` +
-          (hasImg ? `<img src="${state[key]}" alt="${esc(label)}">` :
-          `<div><b>点击上传 3:4 ${esc(label)}</b><br><small>图片只保存在当前设备</small></div>`) +
+        `<div class="hero ${hasImg ? '' : 'empty'}" id="${key}Pick" data-key="${key}">` +
+          (hasImg ? `<img src="${state[key]}" alt="${esc(label)}">` +
+            `<button class="hero-del" data-del="${key}" onclick="event.stopPropagation();removeImage('${key}')" title="删除图片">×</button>` :
+          `<div class="hero-empty"><b>＋ 添加图片</b><small>${esc(label)}</small></div>`) +
         `</div>`;
     }
+
+    // ---- 删除图片：清空 state 与占位，不重渲整页 ----
+    window.removeImage = function(key) {
+      pushHistory();
+      state[key] = '';
+      save();
+      const pick = document.getElementById(key + 'Pick');
+      if (pick) {
+        pick.classList.add('empty');
+        pick.innerHTML = `<div class="hero-empty"><b>＋ 添加图片</b><small>${esc(key === 'image' ? '开篇主图' : (key === 'writerImage' ? '文章配图' : '副业配图'))}</small></div>`;
+      }
+      showToast('图片已删除');
+    };
 
     // ---- 顶部工具栏 ----
     function bar(title, id, fileLabel) {
@@ -814,7 +994,7 @@ if ('serviceWorker' in navigator) {
           <b>排版调节</b>
           <label class="label">正文字号
             <div class="range-row">
-              <input type="range" min="13" max="22" value="${state.bodySize}" oninput="onStyleChange('bodySize',+this.value)">
+              <input type="range" min="13" max="22" value="${state.bodySize}" oninput="onStyleChange('bodySize',+this.value)" onchange="pushHistory()">
               <span id="bodySizeVal">${state.bodySize}px</span>
             </div>
           </label>
@@ -825,9 +1005,9 @@ if ('serviceWorker' in navigator) {
           </div>
           <div class="label">自定义颜色
             <div class="color-row">
-              <input type="color" value="${state.ink}" oninput="onStyleChange('ink',this.value)" title="标题色">
-              <input type="color" value="${state.red}" oninput="onStyleChange('red',this.value)" title="强调色">
-              <input type="color" value="${state.paper}" oninput="onStyleChange('paper',this.value)" title="纸张色">
+              <input type="color" value="${state.ink}" oninput="onStyleChange('ink',this.value)" onchange="pushHistory()" title="标题色">
+              <input type="color" value="${state.red}" oninput="onStyleChange('red',this.value)" onchange="pushHistory()" title="强调色">
+              <input type="color" value="${state.paper}" oninput="onStyleChange('paper',this.value)" onchange="pushHistory()" title="纸张色">
             </div>
           </div>
           <button class="panel-btn dark" onclick="resetState()">重置全部内容</button>
@@ -836,7 +1016,7 @@ if ('serviceWorker' in navigator) {
     }
 
     function onStyleChange(key, val) {
-      pushHistory();
+      // v16：滑块拖动时只实时应用，不写历史；历史在 onchange 里 push
       state[key] = val;
       applyTheme();
       save();
@@ -875,12 +1055,8 @@ if ('serviceWorker' in navigator) {
     function newsView() {
       const paras = state.article.split(/\n\s*\n/).filter(Boolean)
         .map(t => `<p class="edit" contenteditable="true" data-edit="articleP">${esc(t)}</p>`);
-      const cut = Math.ceil(paras.length / 3);
-      const body = paras.slice(0, cut).join('') +
-        filePicker('imageMid', '中段配图') +
-        paras.slice(cut, cut*2).join('') +
-        filePicker('imageEnd', '结尾前配图') +
-        paras.slice(cut*2).join('');
+      // v16：正文只保留段落，不再强制插入第二、第三张配图（只保留顶部主图）
+      const body = paras.join('');
 
       return `<div class="tool">` +
         panel(`<div class="panel-section">
@@ -898,7 +1074,7 @@ if ('serviceWorker' in navigator) {
               ${[2,3,4].map(n => `<button data-cols="${n}" class="${state.cols===n?'on':''}">${n}栏</button>`).join('')}
             </div>
           </div>
-          <p class="note">预览文字可直接点击修改。开篇、中段、结尾前各有一个 3:4 图片位。所有改动会记录在历史栈中。</p>
+          <p class="note">预览文字可直接点击修改，也可直接粘贴整篇新闻，网站会自动整理段落。顶部保留一张主图；正文配图由你自己决定是否添加。</p>
         </div>` +
         styleControls()
         ) +
@@ -931,7 +1107,7 @@ if ('serviceWorker' in navigator) {
           <b>文章内容</b>
           <label class="label">标题<input data-k="writerTitle" value="${esc(state.writerTitle)}"></label>
           <label class="label">正文<textarea data-k="writerText">${esc(state.writerText)}</textarea></label>
-          <p class="note">预览文字可直接点击修改，也可以粘贴文章。所有改动会记录在历史栈中。</p>
+          <p class="note">预览文字可直接点击修改，也可以粘贴整篇文章，网站会自动按段落排版。所有内容实时自动保存。</p>
         </div>` +
         styleControls()
         ) +
@@ -1071,7 +1247,11 @@ if ('serviceWorker' in navigator) {
         state[key] = r.result;
         save();
         const pick = document.getElementById(key + 'Pick');
-        if (pick) pick.innerHTML = `<img src="${state[key]}" alt="">`;
+        if (pick) {
+          pick.classList.remove('empty');
+          pick.innerHTML = `<img src="${state[key]}" alt="">` +
+            `<button class="hero-del" data-del="${key}" onclick="event.stopPropagation();removeImage('${key}')" title="删除图片">×</button>`;
+        }
         showToast('图片已更新');
       };
       r.readAsDataURL(file);
@@ -1087,6 +1267,24 @@ if ('serviceWorker' in navigator) {
           liveUpdate(e.dataset.k, e.value);
         };
         e.onblur = () => pushHistory();
+        // v16：正文 textarea 粘贴时自动清洗（多余空行/连续空白/异常换行）
+        if (e.tagName === 'TEXTAREA' && (e.dataset.k === 'article' || e.dataset.k === 'writerText')) {
+          e.onpaste = (ev) => {
+            ev.preventDefault();
+            const cd = ev.clipboardData || window.clipboardData;
+            if (!cd) return;
+            const text = cd.getData('text/plain') || '';
+            if (!text) return;
+            const clean = paragraphsFromText(text).join('\n\n');
+            const start = e.selectionStart, end = e.selectionEnd;
+            const val = e.value;
+            e.value = val.slice(0, start) + clean + val.slice(end);
+            e.selectionStart = e.selectionEnd = start + clean.length;
+            state[e.dataset.k] = e.value;
+            save();
+            liveUpdate(e.dataset.k, e.value);
+          };
+        }
       });
 
       // 栏数切换
@@ -1101,8 +1299,8 @@ if ('serviceWorker' in navigator) {
         };
       });
 
-      // 图片上传
-      ['image','imageMid','imageEnd','writerImage','sideImage'].forEach(k => {
+      // 图片上传（v16：中段/结尾配图已移除，仅保留主图位）
+      ['image','writerImage','sideImage'].forEach(k => {
         const p = document.getElementById(k + 'Pick');
         const f = document.getElementById(k + 'File');
         if (p && f) {
@@ -1113,49 +1311,129 @@ if ('serviceWorker' in navigator) {
 
       // contenteditable 同步回 state（输入即同步，不依赖失焦）
       document.querySelectorAll('.edit[contenteditable]').forEach((el) => {
+        const key = el.dataset.edit;
+        // v16：正文粘贴自动排版 —— 统一成 <p> 段落，清洗多余空行/连续空白/异常换行
+        if (key === 'writerBody') {
+          el.onpaste = (e) => {
+            e.preventDefault();
+            const cd = e.clipboardData || window.clipboardData;
+            if (!cd) return;
+            const text = cd.getData('text/plain') || '';
+            if (!text) return;
+            insertCleanParagraphs(el, text);
+            state.writerText = extractParagraphs(el).join('\n\n');
+            const ta = document.querySelector('textarea[data-k="writerText"]');
+            if (ta) ta.value = state.writerText;
+            save();
+          };
+        } else if (key === 'articleP') {
+          el.onpaste = (e) => {
+            e.preventDefault();
+            const cd = e.clipboardData || window.clipboardData;
+            if (!cd) return;
+            const text = cd.getData('text/plain') || '';
+            if (!text) return;
+            const paras = paragraphsFromText(text);
+            if (!paras.length) return;
+            const sel = window.getSelection();
+            let lastNode = null;
+            if (sel && sel.rangeCount && sel.getRangeAt(0).intersectsNode(el)) {
+              const range = sel.getRangeAt(0);
+              // 第一段插入当前光标位置
+              const first = paras.shift();
+              range.deleteContents();
+              const tn = document.createTextNode(first);
+              range.insertNode(tn);
+              lastNode = tn;
+              // 其余段落作为独立段落追加到当前段之后
+              paras.forEach(pt => {
+                const np = document.createElement('p');
+                np.className = 'edit';
+                np.contentEditable = 'true';
+                np.dataset.edit = 'articleP';
+                np.textContent = pt;
+                el.after(np);
+                lastNode = np;
+              });
+              range.setStartAfter(lastNode);
+              range.collapse(true);
+              sel.removeAllRanges();
+              sel.addRange(range);
+            } else {
+              el.textContent = (el.textContent || '') + '\n\n' + paras.join('\n\n');
+            }
+            const cols = el.closest('.cols');
+            if (cols) {
+              state.article = extractParagraphs(cols).join('\n\n');
+              const ta = document.querySelector('textarea[data-k="article"]');
+              if (ta) ta.value = state.article;
+            }
+            save();
+          };
+        }
         el.oninput = () => {
-          const key = el.dataset.edit;
-          if (!key) return;
-          if (key === 'name') state.name = el.textContent;
-          else if (key === 'title') state.title = el.textContent;
-          else if (key === 'writerTitle') state.writerTitle = el.textContent;
-          else if (key === 'writerBody') {
-            state.writerText = Array.from(el.querySelectorAll('p')).map(p => p.textContent).join('\n\n');
+          const k = el.dataset.edit;
+          if (!k) return;
+          if (k === 'name') state.name = el.textContent;
+          else if (k === 'title') state.title = el.textContent;
+          else if (k === 'writerTitle') state.writerTitle = el.textContent;
+          else if (k === 'writerBody') {
+            state.writerText = extractParagraphs(el).join('\n\n');
+            const ta = document.querySelector('textarea[data-k="writerText"]');
+            if (ta) ta.value = state.writerText;
           }
-          else if (key === 'sideTitle') {
+          else if (k === 'sideTitle') {
             state.sideSection = el.textContent;
           }
-          else if (key === 'articleP') {
+          else if (k === 'articleP') {
             // 收集 .cols 内所有文章段落，合并回 state.article
             const cols = el.closest('.cols');
             if (cols) {
-              const ps = cols.querySelectorAll('p[data-edit="articleP"]');
-              state.article = Array.from(ps).map(p => p.textContent).join('\n\n');
+              state.article = extractParagraphs(cols).join('\n\n');
               // 同步面板里的 textarea
               const ta = document.querySelector('textarea[data-k="article"]');
               if (ta) ta.value = state.article;
             }
           }
-          else if (key === 'kicker') state.kicker = el.textContent;
-          else if (key === 'deck') state.deck = el.textContent;
-          else if (key === 'byline') {
+          else if (k === 'kicker') state.kicker = el.textContent;
+          else if (k === 'deck') state.deck = el.textContent;
+          else if (k === 'byline') {
             // byline 含日期后缀，只存前面的文字部分
             state.byline = el.textContent.split('\u3000')[0].trim();
           }
-          else if (key === 'mastLeft') state.mastLeft = el.textContent;
-          else if (key === 'mastRight') state.mastRight = el.textContent;
-          else if (key === 'storyTag') state.storyTag = el.textContent;
-          else if (key === 'sideMastLeft') state.sideMastLeft = el.textContent;
-          else if (key === 'sideMastRight') state.sideMastRight = el.textContent;
-          else if (key === 'sideMetaPrefix') state.sideMetaPrefix = el.textContent;
-          else if (key === 'sideMetaSuffix') state.sideMetaSuffix = el.textContent;
-          else if (key === 'sideSubTag') state.sideSubTag = el.textContent;
-          else if (key === 'sideEmptyMsg') state.sideEmptyMsg = el.textContent;
-          else if (key === 'waterMark') state.waterMark = el.textContent;
-          else if (key === 'navBrand') state.navBrand = el.textContent;
+          else if (k === 'mastLeft') state.mastLeft = el.textContent;
+          else if (k === 'mastRight') state.mastRight = el.textContent;
+          else if (k === 'storyTag') state.storyTag = el.textContent;
+          else if (k === 'sideMastLeft') state.sideMastLeft = el.textContent;
+          else if (k === 'sideMastRight') state.sideMastRight = el.textContent;
+          else if (k === 'sideMetaPrefix') state.sideMetaPrefix = el.textContent;
+          else if (k === 'sideMetaSuffix') state.sideMetaSuffix = el.textContent;
+          else if (k === 'sideSubTag') state.sideSubTag = el.textContent;
+          else if (k === 'sideEmptyMsg') state.sideEmptyMsg = el.textContent;
+          else if (k === 'waterMark') state.waterMark = el.textContent;
+          else if (k === 'navBrand') state.navBrand = el.textContent;
           save();
         };
-        el.onblur = () => pushHistory();
+        el.onblur = () => {
+          pushHistory();
+          // v16：失焦时清理空段落/空 div，避免删除内容后残留大空白
+          if (key === 'writerBody') {
+            pruneEmptyBlocks(el);
+            state.writerText = extractParagraphs(el).join('\n\n');
+            const ta = document.querySelector('textarea[data-k="writerText"]');
+            if (ta) ta.value = state.writerText;
+            save();
+          } else if (key === 'articleP') {
+            const cols = el.closest('.cols');
+            if (cols) {
+              pruneEmptyBlocks(cols);
+              state.article = extractParagraphs(cols).join('\n\n');
+              const ta = document.querySelector('textarea[data-k="article"]');
+              if (ta) ta.value = state.article;
+              save();
+            }
+          }
+        };
       });
 
       // 副业条目 inline 编辑（输入即同步）
@@ -1181,7 +1459,7 @@ if ('serviceWorker' in navigator) {
         el.onblur = () => pushHistory();
       });
 
-      // 副业写作区：粘贴自动排版（按段落 + 行内换行）
+      // 副业写作区：粘贴自动排版（v16：统一清洗 + 按段落插入 <p>）
       const writerEl = document.getElementById('sideWriter');
       if (writerEl) {
         writerEl.onpaste = (e) => {
@@ -1190,26 +1468,7 @@ if ('serviceWorker' in navigator) {
           if (!cd) return;
           const text = cd.getData('text/plain') || '';
           if (!text) return;
-          // 段落 = 双换行分割；行内换行 = <br>
-          const paras = text.split(/\n{2,}/).map(p => p.trim()).filter(Boolean);
-          const html = paras.map(p => '<p>' + p.split(/\n/).map(l => esc(l)).join('<br>') + '</p>').join('');
-          const sel = window.getSelection();
-          if (sel && sel.rangeCount) {
-            const range = sel.getRangeAt(0);
-            range.deleteContents();
-            const frag = document.createRange().createContextualFragment(html);
-            const lastNode = frag.lastChild;
-            range.insertNode(frag);
-            // 把光标移到插入内容末尾
-            if (lastNode) {
-              range.setStartAfter(lastNode);
-              range.collapse(true);
-              sel.removeAllRanges();
-              sel.addRange(range);
-            }
-          } else {
-            writerEl.insertAdjacentHTML('beforeend', html);
-          }
+          insertCleanParagraphs(writerEl, text);
           state.sideArticle = writerEl.innerHTML;
           save();
         };
@@ -1217,7 +1476,12 @@ if ('serviceWorker' in navigator) {
           state.sideArticle = writerEl.innerHTML;
           save();
         };
-        writerEl.onblur = () => pushHistory();
+        writerEl.onblur = () => {
+          pushHistory();
+          pruneEmptyBlocks(writerEl);
+          state.sideArticle = writerEl.innerHTML;
+          save();
+        };
       }
     }
 
@@ -1233,14 +1497,10 @@ if ('serviceWorker' in navigator) {
       } else if (key === 'article') {
         const cols = document.querySelector('.cols');
         if (cols) {
-          const paras = value.split(/\n\s*\n/).filter(Boolean);
-          const cut = Math.ceil(paras.length / 3);
-          const html = paras.slice(0, cut).map(t => `<p class="edit" contenteditable="true" data-edit="articleP">${esc(t)}</p>`).join('') +
-            filePicker('imageMid', '中段配图') +
-            paras.slice(cut, cut*2).map(t => `<p class="edit" contenteditable="true" data-edit="articleP">${esc(t)}</p>`).join('') +
-            filePicker('imageEnd', '结尾前配图') +
-            paras.slice(cut*2).map(t => `<p class="edit" contenteditable="true" data-edit="articleP">${esc(t)}</p>`).join('');
-          cols.innerHTML = html;
+          // v16：正文只保留段落，不插入中段/结尾配图
+          const paras = value.split(/\n\s*\n/).filter(Boolean)
+            .map(t => `<p class="edit" contenteditable="true" data-edit="articleP">${esc(t)}</p>`);
+          cols.innerHTML = paras.join('');
           bind();
         }
       } else if (key === 'writerTitle') {
@@ -1312,9 +1572,18 @@ if ('serviceWorker' in navigator) {
     });
 
     // ---- 启动 ----
+    // v16：确保 contenteditable 里按回车创建的是 <p> 段落（而不是 <div>），
+    // 从源头避免「粘贴/输入内容与 state 同步丢失」的问题。
+    try { document.execCommand('defaultParagraphSeparator', false, 'p'); } catch(e) {}
     applyTheme();
     pushHistory();
     render();
+
+    // v16：页面切后台/退出前强制落盘，防止草稿丢失
+    window.addEventListener('pagehide', saveNow);
+    document.addEventListener('visibilitychange', function() {
+      if (document.visibilityState === 'hidden') saveNow();
+    });
 
     // 在手机上默认折叠面板，节省垂直空间
     if (window.matchMedia && window.matchMedia('(max-width: 768px)').matches) {
