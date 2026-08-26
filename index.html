@@ -277,8 +277,6 @@
     .float-hr:hover{background:#3a3c38;transform:scale(1.06)}
     .float-hr:active{transform:scale(.93)}
     .float-hr::before{content:"";display:block;width:20px;border-top:2px solid #d5b96f}
-    .float-hr::after{content:"插入横杠";position:absolute;right:52px;top:50%;transform:translateY(-50%);background:var(--dark);color:#d5b96f;padding:4px 10px;border-radius:4px;font-size:12px;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .2s}
-    .float-hr:hover::after{opacity:.9}
     .float-hr.hide{opacity:0;pointer-events:none;transform:scale(.7)}
     @media print{.float-hr{display:none!important}}
 
@@ -1150,35 +1148,30 @@ if ('serviceWorker' in navigator) {
     function bar(title, id, fileLabel, scope) {
       // scope: 'news' | 'writer' | 'side' — 用于点击横杠按钮时定位插入点
       return `<header class="bar"><span>${title}</span><div class="spacer"></div>` +
-        `<button class="hr-btn" data-hr-scope="${scope}" onclick="insertHr('${scope}')" title="在正文光标处插入水平横杠（分割线）">— 插入横杠</button>` +
         `<button onclick="window.print()">保存 PDF</button>` +
         `<button onclick="downloadLong('${id}','${esc(fileLabel || title)}')">下载长图</button>` +
       `</header>`;
     }
 
     /* ============================================================
-       v18 新增：在三个板块的正文光标处插入水平横杠（<hr> 节点）
-       - news 板块：光标落在 .cols 内 → 插入 <hr> 到 cols 子节点末尾
-       - writer 板块：光标落在 writerBody 内 → 同样插入
-       - side 板块：直接 append 到 #sideWriter 末尾
-       优先尝试当前选区（如果是 contenteditable 容器内），否则
-       把 <hr> 追加到目标容器末尾。
+       在三个板块的正文光标处插入水平横杠（<hr> 节点）
+       - 优先读 window._lastValidRange（提前在 selectionchange/pointerdown 时存好的）
+       - 退化 1：当前 selection 落在 target 内
+       - 退化 2：document.activeElement 是 target 的子，取 target 的最后光标位置
+       - 退化 3：直接 append 到末尾
        ============================================================ */
     window.insertHr = function(scope) {
       const hr = document.createElement('hr');
       hr.className = 'hr-md';
 
       let target = null;
-      // 不同板块对应的 contenteditable 容器
       if (scope === 'news') {
-        // 找到第一个 .cols 中的 .edit 容器
         target = document.querySelector('.cols');
       } else if (scope === 'writer') {
         target = document.querySelector('.story div.edit[contenteditable][data-edit="writerBody"]');
       } else if (scope === 'side') {
         target = document.getElementById('sideWriter');
       }
-
       if (!target) {
         showToast('请先把光标放在正文里');
         return;
@@ -1186,78 +1179,88 @@ if ('serviceWorker' in navigator) {
 
       pushHistory();
 
-      // 优先使用最近一次有效选区（_lastValidRange），因为按钮点击会抢走焦点导致 window.getSelection() 失效
+      // 取 range：分层尝试
       const sel = window.getSelection();
       let range = null;
-      if (window._lastValidRange) {
+      const inTarget = (r) => r && (target.contains(r.commonAncestorContainer) || target === r.commonAncestorContainer);
+
+      // 第一优先：_lastValidRange（提前在 selectionchange/pointerdown 时存好的）
+      if (window._lastValidRange && inTarget(window._lastValidRange)) {
         range = window._lastValidRange.cloneRange();
-      } else if (sel && sel.rangeCount) {
-        range = sel.getRangeAt(0);
       }
+      // 第二优先：当前 window.getSelection（可能被 blur 时清理）
+      if (!range && sel && sel.rangeCount && inTarget(sel.getRangeAt(0))) {
+        range = sel.getRangeAt(0).cloneRange();
+      }
+      // 第三兜底：document.activeElement 是 target 内某元素 → 重建一个 range 指向末尾
+      if (!range && document.activeElement && target.contains(document.activeElement)) {
+        range = document.createRange();
+        range.selectNodeContents(document.activeElement);
+        range.collapse(false);
+      }
+      // 第四兜底：把 target 内最后一个块级元素的末尾当 cursor
+      if (!range) {
+        const lastChild = target.lastElementChild || target.lastChild;
+        if (lastChild) {
+          range = document.createRange();
+          range.selectNodeContents(lastChild);
+          range.collapse(false);
+        }
+      }
+
+      // 把 hr + 后续空段插到目标位置
+      const follow = document.createElement('p');
+      follow.innerHTML = '<br>';
+      const frag = document.createDocumentFragment();
+      frag.appendChild(hr);
+      frag.appendChild(follow);
 
       let inserted = false;
       if (range) {
-        // 要求光标在 target 内或其后代里
-        if (target.contains(range.commonAncestorContainer) || target === range.commonAncestorContainer) {
-          // 找到 cursor 所在 target 的直接子节点（关键修复：处理裸文本节点场景）
-          // 旧逻辑：cursor.parent === target 时一律 append 到末尾，丢失光标位置
-          let childOfTarget = null;
-          if (range.startContainer === target) {
-            // cursor 在 target 根级别，startOffset 就是子节点索引
-            childOfTarget = target.childNodes[range.startOffset] || null;
-          } else {
-            // 从 cursor 节点向上走，直到找到一个直接挂在 target 下的节点
-            let node = range.startContainer;
-            if (node.nodeType === 3) node = node.parentElement;
-            if (node === target) {
-              // 裸文本节点场景：text node 的 parent 已经是 target，保留原始 text node 作为锚点
-              childOfTarget = range.startContainer;
-            } else {
-              while (node && node.parentNode && node.parentNode !== target) {
-                node = node.parentNode;
-              }
-              childOfTarget = (node && node.parentNode === target) ? node : null;
+        // 找到 cursor 所在 target 的直接子节点（兼容裸文本节点 + 嵌套 div 包裹）
+        let childOfTarget = null;
+        if (range.startContainer === target) {
+          // cursor 在 target 根级别（startOffset 是子节点索引）
+          childOfTarget = target.childNodes[range.startOffset] || null;
+        } else {
+          // 从 cursor 节点向上爬到 target 的直接子节点
+          // 修正：判断条件应该是「node 自己就是 target」（裸文本节点场景）或「node 的 parent 是 target」
+          let node = range.startContainer;
+          if (node.nodeType === 3) node = node.parentElement; // text node → element
+          if (node === target) {
+            // text node 的 parent 就是 target 自己
+            childOfTarget = range.startContainer; // 保留原 text node 作为锚点
+          } else if (node && node.parentNode === target) {
+            // node 已经直接挂在 target 下
+            childOfTarget = node;
+          } else if (node) {
+            // 一直向上爬到 target 的直接子节点
+            while (node && node.parentNode && node.parentNode !== target) {
+              node = node.parentNode;
             }
+            childOfTarget = (node && node.parentNode === target) ? node : null;
           }
-
-          // 创建后续段落，给光标留个落点
-          const follow = document.createElement('p');
-          follow.innerHTML = '<br>';
-          const frag = document.createDocumentFragment();
-          frag.appendChild(hr);
-          frag.appendChild(follow);
-
-          if (childOfTarget) {
-            // 插在 childOfTarget 之后（保持光标当前位置语义）
-            target.insertBefore(frag, childOfTarget.nextSibling);
-          } else {
-            // 实在定位不到子节点，回退到末尾
-            target.appendChild(frag);
-          }
-          // 把光标移动到新创建的段落里
-          const r = document.createRange();
-          r.setStart(follow, 0);
-          r.collapse(true);
-          if (sel) { sel.removeAllRanges(); sel.addRange(r); }
-          // 同步更新 _lastValidRange
-          window._lastValidRange = r.cloneRange();
-          inserted = true;
         }
-      }
-      if (!inserted) {
-        // 没有可用光标：追加到末尾，并新建一个空 <p> 收尾
-        const follow = document.createElement('p');
-        follow.innerHTML = '<br>';
-        target.appendChild(hr);
-        target.appendChild(follow);
+        if (childOfTarget) {
+          target.insertBefore(frag, childOfTarget.nextSibling);
+        } else {
+          target.appendChild(frag);
+        }
+        // 把光标移到 follow
         const r = document.createRange();
         r.setStart(follow, 0);
         r.collapse(true);
         if (sel) { sel.removeAllRanges(); sel.addRange(r); }
         window._lastValidRange = r.cloneRange();
+        inserted = true;
       }
 
-      // 通知对应 state 同步（依赖现有 oninput/blur 逻辑；下面兜底刷新）
+      if (!inserted) {
+        // 退化：追加到末尾
+        target.appendChild(frag);
+      }
+
+      // 同步到 state
       if (scope === 'news') {
         const cols = document.querySelector('.cols');
         if (cols) {
@@ -1404,7 +1407,7 @@ if ('serviceWorker' in navigator) {
           <b>文章内容</b>
           <label class="label">标题<input data-k="writerTitle" value="${esc(state.writerTitle)}"></label>
           <label class="label">正文<textarea data-k="writerText">${esc(state.writerText)}</textarea></label>
-          <p class="note">预览文字可直接点击修改，也可以粘贴整篇文章，网站会自动按段落排版。<br>在原文中独立一行输入 <code>---</code> 会自动渲染成贯穿全宽的横杠；工具栏也有"插入横杠"按钮。<br>所有内容实时自动保存。</p>
+          <p class="note">预览文字可直接点击修改，也可以粘贴整篇文章，网站会自动按段落排版。<br>在原文中独立一行输入 <code>---</code> 会自动渲染成贯穿全宽的横杠；也可以点右上角浮动横杠按钮即时插入。<br>所有内容实时自动保存。</p>
         </div>` +
         styleControls()
         ) +
@@ -1938,71 +1941,66 @@ if ('serviceWorker' in navigator) {
       if(!btn) return;
       var scopeMap = {news:'news', write:'writer', side:'side'};
 
-      // 全局跟踪最近一次有效选区（_lastValidRange），供 insertHr 使用
-      // 因为按钮点击会触发 blur，把 window.getSelection() 抢空
+      // 全局跟踪最近一次有效选区，供 insertHr 使用
       window._lastValidRange = null;
       var editables = 'p[contenteditable],div[contenteditable],span[contenteditable],[data-edit]';
+
+      // selectionchange：在任何 contenteditable 内的 selection 都记录（valid check 在使用时做）
       document.addEventListener('selectionchange', function(){
         var s = window.getSelection();
         if(!s || !s.rangeCount) return;
         var r = s.getRangeAt(0);
-        // 只在选区落在 contenteditable 里时记录
-        var n = r.commonAncestorContainer;
-        if(n.nodeType === 3) n = n.parentElement;
-        if(n && (n.closest && n.closest('[contenteditable]'))) {
-          window._lastValidRange = r.cloneRange();
-        }
-      });
-      // 兜底：focus 进 contenteditable / 点在 contenteditable 上时，立刻抓一次
-      document.addEventListener('focusin', function(e){
-        if(e.target && e.target.closest && e.target.closest('[contenteditable]')){
-          var s = window.getSelection();
-          if(s && s.rangeCount){
-            window._lastValidRange = s.getRangeAt(0).cloneRange();
-          }
-        }
-      });
-      // pointerdown 在 contenteditable 上时，也主动备份一次（最快、最可靠的取点时机）
-      document.addEventListener('pointerdown', function(e){
-        var t = e.target;
-        if(t && t.closest && t.closest('[contenteditable]')){
-          // 等浏览器更新完选区再读
-          setTimeout(function(){
-            var s = window.getSelection();
-            if(s && s.rangeCount){
-              window._lastValidRange = s.getRangeAt(0).cloneRange();
-            }
-          }, 0);
-        }
-      });
-      // 兜底：mousedown/touchstart 抓住当前选区（手机端 selectionchange 触发滞后时尤其重要）
-      function captureAtPointer(){
-        var s = window.getSelection();
-        if(!s || !s.rangeCount) return;
-        var r = s.getRangeAt(0);
-        // 关键：只接受落在 contenteditable 里的选区，避免按钮抢焦点后 selection 跑偏把 _lastValidRange 污染了
         var n = r.commonAncestorContainer;
         if(n.nodeType === 3) n = n.parentElement;
         if(n && n.closest && n.closest('[contenteditable]')) {
           window._lastValidRange = r.cloneRange();
         }
-      }
-      btn.addEventListener('mousedown', captureAtPointer);
-      btn.addEventListener('touchstart', captureAtPointer, {passive: true});
+      });
 
-      // 监听 state.tab 变化来显示/隐藏 + 设置 scope
+      // focusin 兜底：focus 进 contenteditable 时立刻抓
+      document.addEventListener('focusin', function(e){
+        if(e.target && e.target.closest && e.target.closest('[contenteditable]')){
+          requestAnimationFrame(function(){
+            var s = window.getSelection();
+            if(s && s.rangeCount){
+              window._lastValidRange = s.getRangeAt(0).cloneRange();
+            }
+          });
+        }
+      });
+
+      // 关键：在 pointerdown 阶段就插入！早于 blur，时机上 selection 还在
+      function onBtnPointerDown(e){
+        e.preventDefault();
+        var scope = scopeMap[window.state && window.state.tab];
+        if(!scope) return;
+
+        // 先把 selection 备份一次（selectionchange 可能没触发）
+        var s = window.getSelection();
+        if(s && s.rangeCount){
+          var r = s.getRangeAt(0);
+          var n = r.commonAncestorContainer;
+          if(n.nodeType === 3) n = n.parentElement;
+          if(n && n.closest && n.closest('[contenteditable]')){
+            window._lastValidRange = r.cloneRange();
+          }
+        }
+
+        if(window.insertHr) window.insertHr(scope);
+      }
+
+      btn.addEventListener('pointerdown', onBtnPointerDown);
+      // 兼容老浏览器
+      btn.addEventListener('mousedown', function(e){ e.preventDefault(); });
+      btn.addEventListener('touchstart', function(e){ e.preventDefault(); }, {passive:false});
+
+      // 显示/隐藏 + scope
       function updateFloatHr(){
         var scope = scopeMap[window.state && window.state.tab] || '';
         if(scope){
           btn.classList.remove('hide');
-          btn.onclick = function(e){
-            // 再次兜底：点击瞬间抓一次
-            captureAtPointer();
-            if(window.insertHr) window.insertHr(scope);
-          };
         }else{
           btn.classList.add('hide');
-          btn.onclick = null;
         }
       }
       // MutationObserver 监听 #app 子节点变化（render 会重写 app.innerHTML）
