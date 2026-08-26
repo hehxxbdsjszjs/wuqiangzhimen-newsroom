@@ -273,11 +273,11 @@
     .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
     /* ===== 浮动横杠按钮（跟随屏幕，写到哪都能点） ===== */
-    .float-hr{position:fixed;right:16px;bottom:calc(80px + env(safe-area-inset-bottom));z-index:100;width:48px;height:48px;border-radius:50%;background:var(--dark);color:#d5b96f;border:1.5px solid #4a4c48;display:grid;place-items:center;cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,.35);transition:opacity .25s,transform .15s;user-select:none;-webkit-tap-highlight-color:transparent}
+    .float-hr{position:fixed;right:14px;top:calc(72px + env(safe-area-inset-top));z-index:100;width:44px;height:44px;border-radius:50%;background:var(--dark);color:#d5b96f;border:1.5px solid #4a4c48;display:grid;place-items:center;cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,.35);transition:opacity .25s,transform .15s;user-select:none;-webkit-tap-highlight-color:transparent}
     .float-hr:hover{background:#3a3c38;transform:scale(1.06)}
     .float-hr:active{transform:scale(.93)}
-    .float-hr::before{content:"";display:block;width:22px;border-top:2px solid #d5b96f}
-    .float-hr::after{content:"插入横杠";position:absolute;right:56px;top:50%;transform:translateY(-50%);background:var(--dark);color:#d5b96f;padding:4px 10px;border-radius:4px;font-size:12px;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .2s}
+    .float-hr::before{content:"";display:block;width:20px;border-top:2px solid #d5b96f}
+    .float-hr::after{content:"插入横杠";position:absolute;right:52px;top:50%;transform:translateY(-50%);background:var(--dark);color:#d5b96f;padding:4px 10px;border-radius:4px;font-size:12px;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .2s}
     .float-hr:hover::after{opacity:.9}
     .float-hr.hide{opacity:0;pointer-events:none;transform:scale(.7)}
     @media print{.float-hr{display:none!important}}
@@ -1186,10 +1186,17 @@ if ('serviceWorker' in navigator) {
 
       pushHistory();
 
+      // 优先使用最近一次有效选区（_lastValidRange），因为按钮点击会抢走焦点导致 window.getSelection() 失效
       const sel = window.getSelection();
+      let range = null;
+      if (window._lastValidRange) {
+        range = window._lastValidRange.cloneRange();
+      } else if (sel && sel.rangeCount) {
+        range = sel.getRangeAt(0);
+      }
+
       let inserted = false;
-      if (sel && sel.rangeCount) {
-        const range = sel.getRangeAt(0);
+      if (range) {
         // 要求光标在 target 内或其后代里
         if (target.contains(range.commonAncestorContainer) || target === range.commonAncestorContainer) {
           // 找到光标所在的块级元素，避免横杠塞进 <p> 里
@@ -1198,10 +1205,8 @@ if ('serviceWorker' in navigator) {
           while (block && block !== target && BLOCK_TAGS.indexOf(block.tagName) === -1) block = block.parentElement;
 
           // 创建后续段落，给光标留个落点
-          const follow = document.createElement(block && block.tagName === 'P' ? 'p' : 'p');
-          if (follow.tagName === 'P') {
-            follow.innerHTML = '<br>';
-          }
+          const follow = document.createElement('p');
+          follow.innerHTML = '<br>';
           const frag = document.createDocumentFragment();
           frag.appendChild(hr);
           frag.appendChild(follow);
@@ -1216,8 +1221,9 @@ if ('serviceWorker' in navigator) {
           const r = document.createRange();
           r.setStart(follow, 0);
           r.collapse(true);
-          sel.removeAllRanges();
-          sel.addRange(r);
+          if (sel) { sel.removeAllRanges(); sel.addRange(r); }
+          // 同步更新 _lastValidRange
+          window._lastValidRange = r.cloneRange();
           inserted = true;
         }
       }
@@ -1230,8 +1236,8 @@ if ('serviceWorker' in navigator) {
         const r = document.createRange();
         r.setStart(follow, 0);
         r.collapse(true);
-        const s = window.getSelection();
-        if (s) { s.removeAllRanges(); s.addRange(r); }
+        if (sel) { sel.removeAllRanges(); sel.addRange(r); }
+        window._lastValidRange = r.cloneRange();
       }
 
       // 通知对应 state 同步（依赖现有 oninput/blur 逻辑；下面兜底刷新）
@@ -1914,12 +1920,50 @@ if ('serviceWorker' in navigator) {
       var btn = document.getElementById('floatHr');
       if(!btn) return;
       var scopeMap = {news:'news', write:'writer', side:'side'};
+
+      // 全局跟踪最近一次有效选区（_lastValidRange），供 insertHr 使用
+      // 因为按钮点击会触发 blur，把 window.getSelection() 抢空
+      window._lastValidRange = null;
+      var editables = 'p[contenteditable],div[contenteditable],span[contenteditable],[data-edit]';
+      document.addEventListener('selectionchange', function(){
+        var s = window.getSelection();
+        if(!s || !s.rangeCount) return;
+        var r = s.getRangeAt(0);
+        // 只在选区落在 contenteditable 里时记录
+        var n = r.commonAncestorContainer;
+        if(n.nodeType === 3) n = n.parentElement;
+        if(n && (n.closest && n.closest('[contenteditable]'))) {
+          window._lastValidRange = r.cloneRange();
+        }
+      });
+      // 兜底：mousedown 抓住当前选区（手机端 selectionchange 触发滞后时尤其重要）
+      function captureAtPointer(){
+        var s = window.getSelection();
+        if(s && s.rangeCount){
+          var r = s.getRangeAt(0);
+          if(!r.collapsed) {
+            window._lastValidRange = r.cloneRange();
+            return;
+          }
+        }
+        // 折叠选区也算有效落点
+        if(s && s.rangeCount){
+          window._lastValidRange = s.getRangeAt(0).cloneRange();
+        }
+      }
+      btn.addEventListener('mousedown', captureAtPointer);
+      btn.addEventListener('touchstart', captureAtPointer, {passive: true});
+
       // 监听 state.tab 变化来显示/隐藏 + 设置 scope
       function updateFloatHr(){
         var scope = scopeMap[window.state && window.state.tab] || '';
         if(scope){
           btn.classList.remove('hide');
-          btn.onclick = function(){ if(window.insertHr) window.insertHr(scope); };
+          btn.onclick = function(e){
+            // 再次兜底：点击瞬间抓一次
+            captureAtPointer();
+            if(window.insertHr) window.insertHr(scope);
+          };
         }else{
           btn.classList.add('hide');
           btn.onclick = null;
