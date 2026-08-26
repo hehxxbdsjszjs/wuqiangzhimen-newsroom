@@ -5,7 +5,7 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
-  <meta name="app-version" content="v16-stable">
+  <meta name="app-version" content="v17-stable">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="mobile-web-app-capable" content="yes" />
@@ -358,7 +358,7 @@ if ('serviceWorker' in navigator) {
   <nav class="nav">
     <span class="mark">N</span>
     <span class="brand">Newsroom Studio</span>
-    <span style="font-size:9px;color:#999;background:#f0f0f0;padding:1px 6px;border-radius:3px;margin-left:4px">v16</span>
+    <span style="font-size:9px;color:#999;background:#f0f0f0;padding:1px 6px;border-radius:3px;margin-left:4px">v17</span>
     <div class="tabs">
       <button data-tab="news" class="on">新闻排版</button>
       <button data-tab="write">写文章</button>
@@ -424,7 +424,7 @@ if ('serviceWorker' in navigator) {
       sideDateToday: '今天 {time}',
       waterMark: '无墙之门',
       navBrand: 'Newsroom Studio',
-      sideEntries: '__ENTRIES__',
+      sideEntries: [],
       style: 'normal',
       bodySize: 16,
       ink: '#181917',
@@ -432,15 +432,7 @@ if ('serviceWorker' in navigator) {
       paper: '#f7f3e9'
     };
 
-    // ---- 副业默认条目（首次进入显示） ----
-    const defaultSideEntries = [
-      {id:'s1', date:'今天 16:30', title:'短视频脚本排期整理', preview:'把分散在三个文档里的近 30 条脚本梳理一遍，归并到一张月度表里。'},
-      {id:'s2', date:'08/12/26', title:'小红书「一个人的小生意」专栏更新', preview:'周末找时间写第 5 期。这一期想聊「副业第一年最该改掉的 3 件事」。'},
-      {id:'s3', date:'08/11/26', title:'接了一个翻译活：商业传记 6 万字', preview:'单价比去年报价低了点，但时间宽松。先签合约，再排译。'},
-      {id:'s4', date:'08/10/26', title:'独立播客《后厂》选题会', preview:'嘉宾请到了原 BAT 产品经理。下周一前把大纲锁死。'},
-      {id:'s5', date:'08/09/26', title:'跟出版社编辑吃了顿饭', preview:'聊了一个选题方向——「海外华人家庭的财务日记」。对方有兴趣。'},
-      {id:'s6', date:'08/08/26', title:'更新副业月度账单表', preview:'加了几列：机会成本 / 时间投资 / 现金流入。用 Notion 重写一版。'}
-    ];
+    // v17：副业词条初始为空，不再提供示例词条（用户删光后保持空）
 
     // ---- IndexedDB 存储（主） + localStorage（备）----
     var DB_NAME = 'wqzm_db';
@@ -506,9 +498,8 @@ if ('serviceWorker' in navigator) {
       } else {
         state = Object.assign({}, defaultState);
       }
-      if (!state.sideEntries || !Array.isArray(state.sideEntries) || state.sideEntries.length === 0) {
-        state.sideEntries = defaultSideEntries.slice();
-      }
+      // v17：只做类型兜底，绝不自动填充示例词条（用户删光就保持空）
+      if (!Array.isArray(state.sideEntries)) state.sideEntries = [];
 
       // 异步从 IndexedDB 加载（如果有更新的数据）
       idbLoad().then(function(idbData) {
@@ -519,9 +510,8 @@ if ('serviceWorker' in navigator) {
             // IndexedDB 有更新的数据
             if (idbData.tab === 'map') idbData.tab = 'news';
             state = Object.assign({}, defaultState, idbData);
-            if (!state.sideEntries || !Array.isArray(state.sideEntries) || state.sideEntries.length === 0) {
-              state.sideEntries = defaultSideEntries.slice();
-            }
+            // v17：只做类型兜底，绝不自动填充示例词条
+            if (!Array.isArray(state.sideEntries)) state.sideEntries = [];
             if (_stateReady) {
               applyTheme();
               render();
@@ -600,9 +590,8 @@ if ('serviceWorker' in navigator) {
               pushHistory();
               if (imported.tab === 'map') imported.tab = 'news';
               state = Object.assign({}, defaultState, imported);
-              if (!state.sideEntries || !Array.isArray(state.sideEntries)) {
-                state.sideEntries = defaultSideEntries.slice();
-              }
+              // v17：只做类型兜底，绝不自动填充示例词条
+              if (!Array.isArray(state.sideEntries)) state.sideEntries = [];
               save();
               applyTheme();
               render();
@@ -1044,7 +1033,7 @@ if ('serviceWorker' in navigator) {
       pushHistory();
       localStorage.removeItem(LS_KEY);
       idbSave({reset: true, _savedAt: 0});
-      const fresh = Object.assign({}, defaultState, {sideEntries: defaultSideEntries.slice()});
+      const fresh = Object.assign({}, defaultState, {sideEntries: []});
       state = fresh;
       applyTheme();
       render();
