@@ -84,6 +84,10 @@
     .bar button+button{background:#79533c}
     .bar button+button:hover{background:#8d6248}
     .bar .spacer{flex:1}
+    /* v18：横杠按钮 — 用中性深色避免被 +button 棕色调覆盖 */
+    .bar button.hr-btn{background:#3a3c38;letter-spacing:.5px;display:inline-flex;align-items:center;gap:5px}
+    .bar button.hr-btn:hover{background:#4a4c48}
+    .bar button.hr-btn::before{content:"";display:inline-block;width:18px;border-top:1.5px solid #d5b96f;margin:0 2px}
 
     /* ===== 报纸版式 ===== */
     .paper{position:relative;width:min(980px,calc(100% - 64px));margin:38px auto;background:var(--paper);padding:34px 46px 130px;box-shadow:0 8px 26px rgba(0,0,0,.25)}
@@ -116,6 +120,37 @@
     .cols p{break-inside:avoid;margin-top:0;margin-bottom:1em}
     .edit{outline:0;cursor:text;border:1px dashed transparent;transition:border-color .15s}
     .edit:focus{border-color:var(--red);background:#fffdf7}
+
+    /* ===== v18：水平横杠（分隔线） =====
+       横贯三个板块（新闻 / 写文章 / 写副业）的统一分隔线。
+       新闻板块需在多栏内优雅断行；写文章 / 写副业是单栏全宽。
+       用 margin + 纯色细线保证不会被 columns 切碎。 */
+    .hr-md{
+      display:block !important;
+      width:100%;
+      height:0;
+      border:0;
+      border-top:1.5px solid var(--ink);
+      margin:1.4em 0;
+      background:transparent;
+      column-span:all;
+      -webkit-column-break-inside:avoid;
+      page-break-inside:avoid;
+      break-inside:avoid;
+      cursor:default;
+      outline:0;
+      position:relative;
+    }
+    /* hover 时提示"这是一个分割线" */
+    .hr-md:hover{border-top-color:var(--red)}
+    /* 副业卡片背景偏白，让横杠更醒目 */
+    .sp-writer .hr-md{border-top-width:1.5px;border-top-color:#111}
+    /* 写文章卡片间距大一些 */
+    .story .edit .hr-md{margin:1.6em 0}
+    /* 让横杠在多栏排版里完整显示，不被截到下一栏 */
+    .cols .hr-md{-webkit-column-break-after:avoid;column-break-after:avoid}
+    /* 不要给 hr 加 contenteditable 边框 */
+    .hr-md.edit{border-top-style:solid}
 
     /* ===== 副业版（黑白调 · 参考 WSJ Markets 顶部黑带 + 写文章双栏格局） ===== */
     .sp-shell{position:relative;width:min(700px,calc(100% - 40px));margin:40px auto 40px;background:#fff;display:grid;grid-template-rows:auto 1fr;box-shadow:0 8px 26px rgba(0,0,0,.25);color:#111;overflow:hidden}
@@ -677,6 +712,11 @@ if ('serviceWorker' in navigator) {
         else if (node.nodeType === 1) {
           const tag = node.tagName;
           if (tag === 'BR') { flush(); }
+          else if (tag === 'HR') {
+            // 横杠节点：作为独立段标记，flush 当前缓冲再压入 ---
+            flush();
+            blocks.push('---');
+          }
           else if (tag === 'IMG') {
             // 保留图片占位文本，避免内嵌图片被静默丢弃
             buf += ' [图片] ';
@@ -717,9 +757,21 @@ if ('serviceWorker' in navigator) {
     }
 
     function insertCleanParagraphs(container, text) {
+      // v18：支持 --- 横杠段（识别后插入带 .hr-md class 的 <hr> 节点）
       const paras = paragraphsFromText(text);
       if (!paras.length) return;
-      const makeP = (t) => { const p = document.createElement('p'); p.textContent = t; return p; };
+      const blocks = blocksFromParagraphs(paras);
+      if (!blocks.length) return;
+      const make = (b) => {
+        if (b.hr) {
+          const h = document.createElement('hr');
+          h.className = 'hr-md';
+          return h;
+        }
+        const p = document.createElement('p');
+        p.textContent = b.p || '';
+        return p;
+      };
       const sel = window.getSelection();
       if (sel && sel.rangeCount && sel.getRangeAt(0).intersectsNode(container)) {
         const range = sel.getRangeAt(0);
@@ -729,9 +781,9 @@ if ('serviceWorker' in navigator) {
         // 避免把 <p> 嵌套进 <p> 破坏结构
         let block = anchor;
         while (block && block !== container && BLOCK_TAGS.indexOf(block.tagName) === -1) block = block.parentElement;
-        const lastNode = makeP(paras[paras.length - 1]);
+        const lastNode = make(blocks[blocks.length - 1]);
         const frag = document.createDocumentFragment();
-        paras.forEach((pt, i) => { frag.appendChild(i === paras.length - 1 ? lastNode : makeP(pt)); });
+        blocks.forEach((b, i) => { frag.appendChild(i === blocks.length - 1 ? lastNode : make(b)); });
         if (block && block !== container) block.after(frag);
         else container.appendChild(frag);
         const r = document.createRange();
@@ -740,7 +792,9 @@ if ('serviceWorker' in navigator) {
         sel.removeAllRanges();
         sel.addRange(r);
       } else {
-        container.insertAdjacentHTML('beforeend', paras.map(t => `<p>${esc(t)}</p>`).join(''));
+        const frag = document.createDocumentFragment();
+        blocks.forEach(b => frag.appendChild(make(b)));
+        container.appendChild(frag);
       }
     }
 
@@ -750,6 +804,120 @@ if ('serviceWorker' in navigator) {
         if (b === container) return;
         if (b.children.length === 0 && !b.textContent.trim()) b.remove();
       });
+    }
+
+    /* ============================================================
+       v18 新增：水平横杠（分隔线）支持
+       ------------------------------------------------------------
+       1) isHrLine(s)：判断一段字符串是否是一条"独立的横杠行"
+          （整行由 - = * _ 三连及以上字符组成）。
+       2) blocksFromParagraphs(paras)：把段落数组转换为块数组，
+          把横杠段识别为 {hr:true}，普通段仍是 {p:'...'}。
+       3) renderBlocksHtml(blocks, opts)：把块数组渲染为 <p> 与
+          <hr class="hr-md"> 混排的 HTML 字符串，opts 控制是否
+          contenteditable。
+       4) extractHrInContainer(el)：收集 .edit 容器内的 hr 节点并
+          转回 "---" 字符串段；让 state.* 文本里保留可识别的横杠段。
+       5) insertBlocksMix(container, blocks, opts)：在
+          contenteditable 里按块类型插入（段落 / 横杠）。
+       ============================================================ */
+    const HR_LINE_RE = /^[ \t]*([-=*_─—–]{3,})[ \t]*$/;
+    function isHrLine(s) {
+      if (typeof s !== 'string') return false;
+      const t = s.replace(/[ \t\u3000]/g, '').trim();
+      if (t.length < 3) return false;
+      // 只识别由同一种横线字符（- * _ ─ — –）组成的整行
+      // 避免把 markdown 的 ===（二级标题）等误识别成横杠
+      return /^([-*_─—–])\1{2,}$/.test(t);
+    }
+
+    function blocksFromParagraphs(paras) {
+      return (paras || []).map(p => isHrLine(p) ? { hr: true, raw: p } : { p });
+    }
+
+    function renderBlocksHtml(blocks, opts) {
+      opts = opts || {};
+      return (blocks || []).map(b => {
+        if (b.hr) return `<hr class="hr-md" data-hr="1">`;
+        if (opts.contenteditable) {
+          const de = opts.dataEdit || '';
+          return `<p class="edit" contenteditable="true" data-edit="${de}">${esc(b.p)}</p>`;
+        }
+        return `<p>${esc(b.p)}</p>`;
+      }).join('');
+    }
+
+    // 把 contenteditable 容器里的内容解析为"字符串段（含 --- 横杠段）"
+    // 用于把 DOM 回写回 state.article / state.writerText 等纯文本字段。
+    function serializeContent(el) {
+      if (!el) return '';
+      const out = [];
+      const walk = (node) => {
+        if (node.nodeType === 3) { out.push(node.nodeValue); }
+        else if (node.nodeType === 1) {
+          const tag = node.tagName;
+          if (tag === 'HR') {
+            out.push('\n\n---\n\n');
+          } else if (tag === 'BR') {
+            // 普通 <br> 在序列化时当作段落分隔
+            out.push('\n\n');
+          } else if (BLOCK_TAGS.indexOf(tag) !== -1) {
+            out.push('\n\n');
+            node.childNodes.forEach(walk);
+            out.push('\n\n');
+          } else {
+            node.childNodes.forEach(walk);
+          }
+        }
+      };
+      walk(el);
+      // 折叠多余空行
+      return out.join('').replace(/\n{3,}/g, '\n\n').replace(/^\n+|\n+$/g, '');
+    }
+
+    // 将 content 中的所有 <hr> 回写为段落形式（用于 export 渲染）
+    function htmlForExport(el) {
+      if (!el) return '';
+      return el.innerHTML;
+    }
+
+    function insertBlocksMix(container, blocks, opts) {
+      if (!container || !blocks || !blocks.length) return;
+      opts = opts || {};
+      const sel = window.getSelection();
+      const make = (b) => {
+        if (b.hr) return document.createElement('hr');
+        const p = document.createElement('p');
+        p.textContent = b.p || '';
+        if (opts.contenteditable) {
+          p.className = 'edit';
+          p.contentEditable = 'true';
+          if (opts.dataEdit) p.dataset.edit = opts.dataEdit;
+        }
+        return p;
+      };
+      if (sel && sel.rangeCount && sel.getRangeAt(0).intersectsNode(container)) {
+        const range = sel.getRangeAt(0);
+        let anchor = range.startContainer;
+        if (anchor.nodeType === 3) anchor = anchor.parentElement;
+        let block = anchor;
+        while (block && block !== container && BLOCK_TAGS.indexOf(block.tagName) === -1) block = block.parentElement;
+        const nodes = blocks.map(make);
+        const frag = document.createDocumentFragment();
+        nodes.forEach(n => frag.appendChild(n));
+        if (block && block !== container) block.after(frag);
+        else container.appendChild(frag);
+        const r = document.createRange();
+        const last = nodes[nodes.length - 1];
+        r.setStartAfter(last);
+        r.collapse(true);
+        sel.removeAllRanges();
+        sel.addRange(r);
+      } else {
+        const frag = document.createDocumentFragment();
+        blocks.forEach(b => frag.appendChild(make(b)));
+        container.appendChild(frag);
+      }
     }
 
     function showToast(msg) {
@@ -969,12 +1137,115 @@ if ('serviceWorker' in navigator) {
     };
 
     // ---- 顶部工具栏 ----
-    function bar(title, id, fileLabel) {
+    function bar(title, id, fileLabel, scope) {
+      // scope: 'news' | 'writer' | 'side' — 用于点击横杠按钮时定位插入点
       return `<header class="bar"><span>${title}</span><div class="spacer"></div>` +
+        `<button class="hr-btn" data-hr-scope="${scope}" onclick="insertHr('${scope}')" title="在正文光标处插入水平横杠（分割线）">— 插入横杠</button>` +
         `<button onclick="window.print()">保存 PDF</button>` +
         `<button onclick="downloadLong('${id}','${esc(fileLabel || title)}')">下载长图</button>` +
       `</header>`;
     }
+
+    /* ============================================================
+       v18 新增：在三个板块的正文光标处插入水平横杠（<hr> 节点）
+       - news 板块：光标落在 .cols 内 → 插入 <hr> 到 cols 子节点末尾
+       - writer 板块：光标落在 writerBody 内 → 同样插入
+       - side 板块：直接 append 到 #sideWriter 末尾
+       优先尝试当前选区（如果是 contenteditable 容器内），否则
+       把 <hr> 追加到目标容器末尾。
+       ============================================================ */
+    window.insertHr = function(scope) {
+      const hr = document.createElement('hr');
+      hr.className = 'hr-md';
+
+      let target = null;
+      // 不同板块对应的 contenteditable 容器
+      if (scope === 'news') {
+        // 找到第一个 .cols 中的 .edit 容器
+        target = document.querySelector('.cols');
+      } else if (scope === 'writer') {
+        target = document.querySelector('.story div.edit[contenteditable][data-edit="writerBody"]');
+      } else if (scope === 'side') {
+        target = document.getElementById('sideWriter');
+      }
+
+      if (!target) {
+        showToast('请先把光标放在正文里');
+        return;
+      }
+
+      pushHistory();
+
+      const sel = window.getSelection();
+      let inserted = false;
+      if (sel && sel.rangeCount) {
+        const range = sel.getRangeAt(0);
+        // 要求光标在 target 内或其后代里
+        if (target.contains(range.commonAncestorContainer) || target === range.commonAncestorContainer) {
+          // 找到光标所在的块级元素，避免横杠塞进 <p> 里
+          let block = range.startContainer;
+          if (block.nodeType === 3) block = block.parentElement;
+          while (block && block !== target && BLOCK_TAGS.indexOf(block.tagName) === -1) block = block.parentElement;
+
+          // 创建后续段落，给光标留个落点
+          const follow = document.createElement(block && block.tagName === 'P' ? 'p' : 'p');
+          if (follow.tagName === 'P') {
+            follow.innerHTML = '<br>';
+          }
+          const frag = document.createDocumentFragment();
+          frag.appendChild(hr);
+          frag.appendChild(follow);
+          if (block && block !== target && block.parentNode) {
+            block.parentNode.insertBefore(frag, block.nextSibling);
+          } else if (block === target) {
+            target.appendChild(frag);
+          } else {
+            target.appendChild(frag);
+          }
+          // 把光标移动到新创建的段落里
+          const r = document.createRange();
+          r.setStart(follow, 0);
+          r.collapse(true);
+          sel.removeAllRanges();
+          sel.addRange(r);
+          inserted = true;
+        }
+      }
+      if (!inserted) {
+        // 没有可用光标：追加到末尾，并新建一个空 <p> 收尾
+        const follow = document.createElement('p');
+        follow.innerHTML = '<br>';
+        target.appendChild(hr);
+        target.appendChild(follow);
+        const r = document.createRange();
+        r.setStart(follow, 0);
+        r.collapse(true);
+        const s = window.getSelection();
+        if (s) { s.removeAllRanges(); s.addRange(r); }
+      }
+
+      // 通知对应 state 同步（依赖现有 oninput/blur 逻辑；下面兜底刷新）
+      if (scope === 'news') {
+        const cols = document.querySelector('.cols');
+        if (cols) {
+          state.article = extractParagraphs(cols).join('\n\n');
+          const ta = document.querySelector('textarea[data-k="article"]');
+          if (ta) ta.value = state.article;
+        }
+      } else if (scope === 'writer') {
+        const div = document.querySelector('.story div.edit[contenteditable][data-edit="writerBody"]');
+        if (div) {
+          state.writerText = extractParagraphs(div).join('\n\n');
+          const ta = document.querySelector('textarea[data-k="writerText"]');
+          if (ta) ta.value = state.writerText;
+        }
+      } else if (scope === 'side') {
+        const w = document.getElementById('sideWriter');
+        if (w) state.sideArticle = w.innerHTML;
+      }
+      save();
+      showToast('横杠已插入');
+    };
 
     // ---- 编辑面板公共控件 ----
     function styleControls() {
@@ -1042,10 +1313,10 @@ if ('serviceWorker' in navigator) {
 
     // ---- ===== 新闻排版 ===== ----
     function newsView() {
-      const paras = state.article.split(/\n\s*\n/).filter(Boolean)
-        .map(t => `<p class="edit" contenteditable="true" data-edit="articleP">${esc(t)}</p>`);
-      // v16：正文只保留段落，不再强制插入第二、第三张配图（只保留顶部主图）
-      const body = paras.join('');
+      // v18：支持 --- 横杠段（自动识别为水平分割线）
+      const rawParas = state.article.split(/\n\s*\n/).filter(Boolean);
+      const blocks = blocksFromParagraphs(rawParas);
+      const body = renderBlocksHtml(blocks, { contenteditable: true, dataEdit: 'articleP' });
 
       return `<div class="tool">` +
         panel(`<div class="panel-section">
@@ -1068,7 +1339,7 @@ if ('serviceWorker' in navigator) {
         styleControls()
         ) +
         `<section class="work">` +
-          bar('新闻排版预览', 'news-card', '新闻排版') +
+          bar('新闻排版预览', 'news-card', '新闻排版', 'news') +
           `<article id="news-card" class="paper">
             <span class="water edit" contenteditable="true" data-edit="waterMark">${esc(state.waterMark || '无墙之门')}</span>
             <div class="mast">
@@ -1091,17 +1362,21 @@ if ('serviceWorker' in navigator) {
 
     // ---- ===== 写文章 ===== ----
     function writeView() {
+      // v18：支持 --- 横杠段
+      const rawParas = state.writerText.split(/\n\s*\n/).filter(Boolean);
+      const blocks = blocksFromParagraphs(rawParas);
+      const writerBodyHtml = renderBlocksHtml(blocks);
       return `<div class="tool">` +
         panel(`<div class="panel-section">
           <b>文章内容</b>
           <label class="label">标题<input data-k="writerTitle" value="${esc(state.writerTitle)}"></label>
           <label class="label">正文<textarea data-k="writerText">${esc(state.writerText)}</textarea></label>
-          <p class="note">预览文字可直接点击修改，也可以粘贴整篇文章，网站会自动按段落排版。所有内容实时自动保存。</p>
+          <p class="note">预览文字可直接点击修改，也可以粘贴整篇文章，网站会自动按段落排版。<br>在原文中独立一行输入 <code>---</code> 会自动渲染成贯穿全宽的横杠；工具栏也有"插入横杠"按钮。<br>所有内容实时自动保存。</p>
         </div>` +
         styleControls()
         ) +
         `<section class="work">` +
-          bar('3:4 文章版', 'story-card', '写文章') +
+          bar('3:4 文章版', 'story-card', '写文章', 'writer') +
           `<article id="story-card" class="story">
             <span class="water edit" contenteditable="true" data-edit="waterMark">${esc(state.waterMark || '无墙之门')}</span>
             ${filePicker('writerImage', '文章配图')}
@@ -1109,7 +1384,7 @@ if ('serviceWorker' in navigator) {
               <small class="tag edit" contenteditable="true" data-edit="storyTag">${esc(state.storyTag)}</small>
               <h1 class="edit" contenteditable="true" data-edit="writerTitle">${esc(state.writerTitle)}</h1>
               <div class="edit" contenteditable="true" data-edit="writerBody">
-                ${state.writerText.split(/\n\s*\n/).filter(Boolean).map(p => `<p>${esc(p)}</p>`).join('')}
+                ${writerBodyHtml}
               </div>
             </div>
             ${stampSvg()}
@@ -1159,7 +1434,7 @@ if ('serviceWorker' in navigator) {
         styleControls()
         ) +
         `<section class="work">` +
-          bar('写副业 · 副业文章', 'sideproject-card', '副业文章') +
+          bar('写副业 · 副业文章', 'sideproject-card', '副业文章', 'side') +
           `<article id="sideproject-card" class="sp-shell">
             <div class="sp-mast-band">
               <span class="sp-mark sp-mast-edit edit" contenteditable="true" data-edit="sideMastLeft">${esc(state.sideMastLeft || '副业')}</span>
@@ -1322,34 +1597,41 @@ if ('serviceWorker' in navigator) {
             if (!cd) return;
             const text = cd.getData('text/plain') || '';
             if (!text) return;
-            const paras = paragraphsFromText(text);
-            if (!paras.length) return;
+            const rawParas = paragraphsFromText(text);
+            if (!rawParas.length) return;
+            const blocks = blocksFromParagraphs(rawParas); // v18：识别 --- 横杠段
+            if (!blocks.length) return;
             const sel = window.getSelection();
+            const makeNode = (b) => {
+              if (b.hr) return document.createElement('hr');
+              const p = document.createElement('p');
+              p.className = 'edit';
+              p.contentEditable = 'true';
+              p.dataset.edit = 'articleP';
+              p.textContent = b.p;
+              return p;
+            };
             let lastNode = null;
             if (sel && sel.rangeCount && sel.getRangeAt(0).intersectsNode(el)) {
               const range = sel.getRangeAt(0);
-              // 第一段插入当前光标位置
-              const first = paras.shift();
+              // 第一块插入当前光标位置
+              const first = blocks.shift();
               range.deleteContents();
-              const tn = document.createTextNode(first);
-              range.insertNode(tn);
-              lastNode = tn;
-              // 其余段落作为独立段落追加到当前段之后
-              paras.forEach(pt => {
-                const np = document.createElement('p');
-                np.className = 'edit';
-                np.contentEditable = 'true';
-                np.dataset.edit = 'articleP';
-                np.textContent = pt;
-                el.after(np);
-                lastNode = np;
+              const firstNode = makeNode(first);
+              range.insertNode(firstNode);
+              lastNode = firstNode;
+              // 其余块作为独立元素追加到当前段之后
+              blocks.forEach(b => {
+                const n = makeNode(b);
+                el.after(n);
+                lastNode = n;
               });
               range.setStartAfter(lastNode);
               range.collapse(true);
               sel.removeAllRanges();
               sel.addRange(range);
             } else {
-              el.textContent = (el.textContent || '') + '\n\n' + paras.join('\n\n');
+              el.textContent = (el.textContent || '') + '\n\n' + rawParas.join('\n\n');
             }
             const cols = el.closest('.cols');
             if (cols) {
@@ -1457,6 +1739,7 @@ if ('serviceWorker' in navigator) {
           if (!cd) return;
           const text = cd.getData('text/plain') || '';
           if (!text) return;
+          // v18：paste 路径也支持 --- 横杠识别
           insertCleanParagraphs(writerEl, text);
           state.sideArticle = writerEl.innerHTML;
           save();
@@ -1486,10 +1769,10 @@ if ('serviceWorker' in navigator) {
       } else if (key === 'article') {
         const cols = document.querySelector('.cols');
         if (cols) {
-          // v16：正文只保留段落，不插入中段/结尾配图
-          const paras = value.split(/\n\s*\n/).filter(Boolean)
-            .map(t => `<p class="edit" contenteditable="true" data-edit="articleP">${esc(t)}</p>`);
-          cols.innerHTML = paras.join('');
+          // v18：支持 --- 横杠段（识别后渲染为 <hr> 节点）
+          const rawParas = value.split(/\n\s*\n/).filter(Boolean);
+          const blocks = blocksFromParagraphs(rawParas);
+          cols.innerHTML = renderBlocksHtml(blocks, { contenteditable: true, dataEdit: 'articleP' });
           bind();
         }
       } else if (key === 'writerTitle') {
@@ -1498,7 +1781,9 @@ if ('serviceWorker' in navigator) {
       } else if (key === 'writerText') {
         const div = document.querySelector('.story div.edit[contenteditable]');
         if (div) {
-          div.innerHTML = value.split(/\n\s*\n/).filter(Boolean).map(p => `<p>${esc(p)}</p>`).join('');
+          const rawParas = value.split(/\n\s*\n/).filter(Boolean);
+          const blocks = blocksFromParagraphs(rawParas);
+          div.innerHTML = renderBlocksHtml(blocks);
         }
       }
     }
