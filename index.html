@@ -272,6 +272,16 @@
     .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(60px);background:var(--dark);color:#f7f3e9;padding:12px 24px;border-radius:4px;font-size:14px;z-index:9999;opacity:0;transition:all .3s;pointer-events:none}
     .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
+    /* ===== 浮动横杠按钮（跟随屏幕，写到哪都能点） ===== */
+    .float-hr{position:fixed;right:16px;bottom:calc(80px + env(safe-area-inset-bottom));z-index:100;width:48px;height:48px;border-radius:50%;background:var(--dark);color:#d5b96f;border:1.5px solid #4a4c48;display:grid;place-items:center;cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,.35);transition:opacity .25s,transform .15s;user-select:none;-webkit-tap-highlight-color:transparent}
+    .float-hr:hover{background:#3a3c38;transform:scale(1.06)}
+    .float-hr:active{transform:scale(.93)}
+    .float-hr::before{content:"";display:block;width:22px;border-top:2px solid #d5b96f}
+    .float-hr::after{content:"插入横杠";position:absolute;right:56px;top:50%;transform:translateY(-50%);background:var(--dark);color:#d5b96f;padding:4px 10px;border-radius:4px;font-size:12px;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .2s}
+    .float-hr:hover::after{opacity:.9}
+    .float-hr.hide{opacity:0;pointer-events:none;transform:scale(.7)}
+    @media print{.float-hr{display:none!important}}
+
     /* ===== 手机端（修复一） ===== */
     @media(max-width:768px){
       body{font-size:15px;-webkit-text-size-adjust:100%}
@@ -1896,6 +1906,35 @@ if ('serviceWorker' in navigator) {
     })();
 
     
+  </script>
+  <!-- 浮动横杠按钮（跟随屏幕，写到哪都能点） -->
+  <div class="float-hr hide" id="floatHr" title="插入水平横杠"></div>
+  <script>
+    (function(){
+      var btn = document.getElementById('floatHr');
+      if(!btn) return;
+      var scopeMap = {news:'news', write:'writer', side:'side'};
+      // 监听 state.tab 变化来显示/隐藏 + 设置 scope
+      function updateFloatHr(){
+        var scope = scopeMap[window.state && window.state.tab] || '';
+        if(scope){
+          btn.classList.remove('hide');
+          btn.onclick = function(){ if(window.insertHr) window.insertHr(scope); };
+        }else{
+          btn.classList.add('hide');
+          btn.onclick = null;
+        }
+      }
+      // MutationObserver 监听 #app 子节点变化（render 会重写 app.innerHTML）
+      var app = document.getElementById('app');
+      if(app){
+        new MutationObserver(updateFloatHr).observe(app, {childList:true, subtree:false});
+      }
+      // 也监听 localStorage 变化（跨 tab 恢复时）
+      window.addEventListener('storage', updateFloatHr);
+      // 初始化
+      updateFloatHr();
+    })();
   </script>
 </body>
 </html>
