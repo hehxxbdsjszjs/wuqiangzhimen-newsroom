@@ -25,3 +25,12 @@
 - 图一标题高度吻合，但没有原图字体文件或模板资料，不能确认具体字体版本或宣称逐像素完全一致。图二采用宋体实字形；Noto 的细节比原图更规整、磨损更少。
 - 全部使用本站同源字体文件，不依赖 Google Fonts 在线接口；仅实际使用的字面才会触发加载。生僻字符以同站宋体补齐，不会刻意放大中文字符间距。
 - 早先已存在的 `title.woff2` 与 `ZCOOL-OFL.txt` 保留原文件，但不再作为当前两种字体选项使用。
+
+
+## v23：古籍简体可调版
+
+- 新网页文件 `engraved-sc-0.woff2`、`engraved-sc-1a.woff2`、`engraved-sc-1b.woff2`、`engraved-sc-2.woff2`（按Unicode范围分包），内部名称 `Wuqang Engraved SC`。基于上述许可允许衍生的汇文明朝体制作，保留原字体版权字段并明确改名；原始 `engraved-huiwen.woff2` 未覆盖。
+- 200–900 为本项目生成的可变轮廓轴，不是原设计师原生多字重。200使用收细轮廓，400保持原版轮廓，900使用加粗轮廓，中间插值；不再依赖CSS描边，不用纸色覆盖笔画。
+- 使用FreeType轮廓处理接口，算法资料：https://freetype.org/freetype2/docs/reference/ft2-outline_processing.html 。构建脚本为 `tools/build-engraved.py`，构建依赖仅在临时环境安装，不增加网站运行时依赖。
+- 简体显示映射来自OpenCC的TSCharacters字表（opencc-python-reimplemented 0.1.7所附版本），来源 https://github.com/BYVoid/OpenCC ，Apache 2.0原件保留于 `OpenCC-Apache-2.0.txt`。将已收录的繁体编码直接映射到相应简体轮廓，不改写文章原文、图片或段落。
+- 映射覆盖数量及具体条目见 `engraved-sc-audit.json`。简体/繁体同组映射进行全表一致性校验。字库仍保留古籍旧印刷笔形（如笔锋、边缘磨损），不把旧笔形与繁体编码混为一谈。
