@@ -5,7 +5,7 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
-  <meta name="app-version" content="v19-reference-type">
+  <meta name="app-version" content="v20-opt-in-type">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="mobile-web-app-capable" content="yes" />
@@ -394,8 +394,8 @@
     @font-face{font-family:ReferenceXiaoWei;src:url('fonts/title.woff2') format('woff2');font-display:swap;font-weight:400 900}
     @font-face{font-family:ReferenceSong;src:url('fonts/body.woff2') format('woff2');font-display:swap;font-weight:400 900}
     :root{--reading-font:ReferenceSong,serif;--heading-font:ReferenceXiaoWei,serif}
-    .paper h1,.story h1,.sp-title-edit{font-family:var(--heading-font)}
-    .cols,.cols p,.story p,.sp-writer,.sp-writer p{font-family:var(--reading-font)}
+    .custom-title-font h1,.custom-title-font .sp-title-edit{font-family:var(--heading-font)}
+    .custom-body-font .cols,.custom-body-font .cols p,.custom-body-font.story p,.custom-body-font .sp-writer,.custom-body-font .sp-writer p{font-family:var(--reading-font)}
     .reference-card{width:min(768px,calc(100% - 32px))!important;padding:54px 50px 70px!important;display:block!important;color:#191917!important;background-color:#fafafa!important;background-image:radial-gradient(ellipse at 20% 30%,#edece733,transparent 65%)!important;min-height:0!important;box-sizing:border-box}
     .reference-card[data-layout="paper"]{background-color:#f5f0e4!important;background-image:radial-gradient(ellipse at 20% 35%,#c8b58c1c,transparent 65%),radial-gradient(ellipse at 80% 75%,#b4b1a21a,transparent 60%)!important}
     .reference-card .mast,.reference-card .rule,.reference-card .kicker,.reference-card .deck,.reference-card .by,.reference-card .tag,.reference-card .sp-mast-band,.reference-card .sp-tag-edit,.reference-card .stamp-wrap,.reference-card .water,.reference-card .hero.empty{display:none!important}
@@ -434,7 +434,7 @@ if ('serviceWorker' in navigator) {
   <nav class="nav">
     <span class="mark">N</span>
     <span class="brand">Newsroom Studio</span>
-    <span style="font-size:9px;color:#999;background:#f0f0f0;padding:1px 6px;border-radius:3px;margin-left:4px">v19</span>
+    <span style="font-size:9px;color:#999;background:#f0f0f0;padding:1px 6px;border-radius:3px;margin-left:4px">v20</span>
     <div class="tabs">
       <button data-tab="news" class="on">新闻排版</button>
       <button data-tab="write">写文章</button>
@@ -793,6 +793,15 @@ if ('serviceWorker' in navigator) {
     }
 
     function paragraphsFromText(text) {
+      // 清洗后按空行切段；段内单个换行 → 空格（中日韩之间不留空格）
+      return cleanPastedText(text)
+        .split(/\n{2,}/)
+        .map(p => p.split('\n').join(' '))
+        .map(p => p.replace(/([\u4e00-\u9fff])\s+([\u4e00-\u9fff])/g, '$1$2').trim())
+        .filter(Boolean);
+    }
+
+    function referenceParagraphsFromText(text) {
       const clean = cleanPastedText(text);
       const parts = clean.includes('\n\n') ? clean.split(/\n{2,}/) : clean.split('\n');
       return parts.map(p => p.replace(/\n/g, ' ').replace(/([\u4e00-\u9fff]) +(?=[\u4e00-\u9fff])/g, '$1').trim()).filter(Boolean);
@@ -1099,8 +1108,10 @@ if ('serviceWorker' in navigator) {
     function downloadLong(id, fileLabel) {
       loadH2C(async function() {
       try {
+        if(getTypography().layout!=='original' || ((state.typography||{})[state.tab]||{}).titleFont || ((state.typography||{})[state.tab]||{}).bodyFont) {
         await Promise.all([document.fonts.load('24px ReferenceSong'),document.fonts.load('48px ReferenceXiaoWei')]);
         await document.fonts.ready;
+        }
       } catch(err) {showToast('字体尚未加载成功，请联网后重试');return;}
       // v16 修复：导出「只读」当前 DOM，绝不重建页面。
       // 旧逻辑在这里执行 syncAllToState()+render()，render() 会用
@@ -1322,24 +1333,27 @@ if ('serviceWorker' in navigator) {
     };
 
     function getTypography() {
-      return Object.assign({titleFont:'xiaowei',bodyFont:'song',layout:'white'}, (state.typography || {})[state.tab]);
+      return Object.assign({titleFont:'xiaowei',bodyFont:'song',layout:'original'}, (state.typography || {})[state.tab]);
     }
     function fontOptions(value) {
-      return [['xiaowei','站酷小薇体 · 书卷'],['song','思源宋体 · 正文']].map(([v,label]) => `<option value="${v}" ${value===v?'selected':''}>${label}</option>`).join('');
+      return `<option disabled ${!value?'selected':''} value="">保持原有字体（未调整）</option>` + [['xiaowei','站酷小薇体 · 书卷'],['song','思源宋体 · 正文']].map(([v,label]) => `<option value="${v}" ${value===v?'selected':''}>${label}</option>`).join('');
     }
     function setTypography(key,value) {
       syncAllToState();pushHistory();
-      state.typography = Object.assign({},state.typography,{[state.tab]:Object.assign(getTypography(),{[key]:value})});
+      state.typography = Object.assign({},state.typography,{[state.tab]:Object.assign({},(state.typography||{})[state.tab],{[key]:value})});
       save();render();
     }
     function decorateReference() {
       const card=document.querySelector('#news-card,#story-card,#sideproject-card');
       if(!card)return;
       const style=getTypography();
+      const selected=(state.typography||{})[state.tab]||{};
+      card.classList.toggle('custom-title-font',!!selected.titleFont);
+      card.classList.toggle('custom-body-font',!!selected.bodyFont);
       card.classList.toggle('reference-card',style.layout!=='original');
       card.dataset.layout=style.layout;
       const body=card.querySelector('.cols,[data-edit="writerBody"],#sideWriter');
-      if(!body)return;
+      if(!body || style.layout==='original')return;
       body.querySelectorAll('p').forEach(p=>{
         const text=p.textContent.trim();
         p.classList.toggle('reference-heading',text.length<=80 && /^(?:#{1,6}\s+|[一二三四五六七八九十百]+[、.．：:]|[0-9]+[、.．）)]\s*|[（(][一二三四五六七八九十0-9]+[)）])/.test(text));
@@ -1352,7 +1366,7 @@ if ('serviceWorker' in navigator) {
     }
     function importReferenceText() {
       const input=document.getElementById('referenceImport');
-      const paragraphs=paragraphsFromText(input.value);
+      const paragraphs=referenceParagraphsFromText(input.value);
       if(!paragraphs.length)return;
       syncAllToState();pushHistory();
       const titleKey={news:'title',write:'writerTitle',side:'sideSection'}[state.tab];
@@ -1371,10 +1385,10 @@ if ('serviceWorker' in navigator) {
       return `
         <div class="panel-section">
           <b>字体与自动排版</b>
-          <label class="label">标题字体<select onchange="setTypography('titleFont',this.value)">${fontOptions(getTypography().titleFont)}</select></label>
-          <label class="label">正文字体<select onchange="setTypography('bodyFont',this.value)">${fontOptions(getTypography().bodyFont)}</select></label>
+          <label class="label">标题字体<select onchange="setTypography('titleFont',this.value)">${fontOptions(((state.typography||{})[state.tab]||{}).titleFont)}</select></label>
+          <label class="label">正文字体<select onchange="setTypography('bodyFont',this.value)">${fontOptions(((state.typography||{})[state.tab]||{}).bodyFont)}</select></label>
           <label class="label">参考排版<select onchange="setTypography('layout',this.value)"><option value="paper" ${getTypography().layout==='paper'?'selected':''}>图一 · 米纸书卷（首行缩进）</option><option value="white" ${getTypography().layout==='white'?'selected':''}>图二 · 白纸阅读（段间留白）</option><option value="original" ${getTypography().layout==='original'?'selected':''}>原有版式</option></select></label>
-          <p class="note">仅提供站酷小薇体、思源宋体两种开源字体，接近参考图，非原图字体鉴定。三个板块分别记忆设置。</p>
+          <p class="note">仅提供站酷小薇体、思源宋体两种开源字体，接近参考图，非原图字体鉴定。三个板块分别记忆设置。不选择时保持原有字体和版式。</p>
           <label class="label">粘贴全文 · 自动排版<textarea id="referenceImport" class="reference-import" placeholder="把全文粘贴到这里，自动整理段落。可勾选首行作为标题。"></textarea></label>
           <label class="note"><input id="referenceFirstTitle" type="checkbox" checked> 首个段落作为标题</label>
           <button class="panel-btn dark" onclick="importReferenceText()">应用全文排版</button>
@@ -1382,7 +1396,7 @@ if ('serviceWorker' in navigator) {
           <b>排版调节</b>
           <label class="label">正文字号
             <div class="range-row">
-              <input type="range" min="13" max="36" value="${getTypography().layout==='original'?state.bodySize:(getTypography().bodySize||28)}" oninput="onStyleChange('bodySize',+this.value)" onchange="pushHistory()">
+              <input type="range" min="13" max="${getTypography().layout==='original'?22:36}" value="${getTypography().layout==='original'?state.bodySize:(getTypography().bodySize||28)}" oninput="onStyleChange('bodySize',+this.value)" onchange="pushHistory()">
               <span id="bodySizeVal">${getTypography().layout==='original'?state.bodySize:(getTypography().bodySize||28)}px</span>
             </div>
           </label>
@@ -1405,8 +1419,9 @@ if ('serviceWorker' in navigator) {
 
     function onStyleChange(key, val) {
       // v16：滑块拖动时只实时应用，不写历史；历史在 onchange 里 push
-      state[key] = val;
-      if(key==='bodySize') state.typography=Object.assign({},state.typography,{[state.tab]:Object.assign(getTypography(),{bodySize:val})});
+      if(key==='bodySize' && getTypography().layout!=='original') {
+        state.typography=Object.assign({},state.typography,{[state.tab]:Object.assign({},(state.typography||{})[state.tab],{bodySize:val})});
+      } else state[key] = val;
       applyTheme();
       save();
       if (key === 'bodySize') {
@@ -1668,7 +1683,6 @@ if ('serviceWorker' in navigator) {
             if (!cd) return;
             const text = cd.getData('text/plain') || '';
             if (!text) return;
-            pushHistory();
             const clean = paragraphsFromText(text).join('\n\n');
             const start = e.selectionStart, end = e.selectionEnd;
             const val = e.value;
@@ -1714,7 +1728,6 @@ if ('serviceWorker' in navigator) {
             if (!cd) return;
             const text = cd.getData('text/plain') || '';
             if (!text) return;
-            pushHistory();
             insertCleanParagraphs(el, text);
             state.writerText = extractParagraphs(el).join('\n\n');
             const ta = document.querySelector('textarea[data-k="writerText"]');
@@ -1728,7 +1741,6 @@ if ('serviceWorker' in navigator) {
             if (!cd) return;
             const text = cd.getData('text/plain') || '';
             if (!text) return;
-            pushHistory();
             const rawParas = paragraphsFromText(text);
             if (!rawParas.length) return;
             const blocks = blocksFromParagraphs(rawParas); // v18：识别 --- 横杠段
@@ -1871,7 +1883,6 @@ if ('serviceWorker' in navigator) {
           if (!cd) return;
           const text = cd.getData('text/plain') || '';
           if (!text) return;
-            pushHistory();
           // v18：paste 路径也支持 --- 横杠识别
           insertCleanParagraphs(writerEl, text);
           state.sideArticle = writerEl.innerHTML;
