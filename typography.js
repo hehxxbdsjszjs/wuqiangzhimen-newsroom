@@ -88,6 +88,14 @@ window.BookTypesetting = (() => {
       <button class="panel-btn dark" onclick="BookTypesetting.original()">恢复原有版式</button>
       <button class="panel-btn dark" onclick="BookTypesetting.downloadReading()">保存阅读页</button>
       <p class="note" id="bookFontStatus" aria-live="polite">${chosen?'字体将在编辑区域加载':'未选择时，保留原有字体与设置。'}</p>
+      <details class="book-details" open><summary>标题位置与文字编辑</summary>
+        <label class="label">标题对齐<select onchange="BookTypesetting.editHeader('titleAlign',this.value)">${[['left','居左'],['center','居中'],['right','居右']].map(([v,t])=>`<option value="${v}" ${(s.titleAlign||'left')===v?'selected':''}>${t}</option>`).join('')}</select></label>
+        <label class="label">标题左侧位置（%）<input type="number" min="0" max="40" value="${s.titleInset||0}" onchange="BookTypesetting.editHeader('titleInset',this.value)"></label>
+        <label class="label">标题上方间距（像素）<input type="number" min="0" max="200" value="${s.titleBefore??26}" onchange="BookTypesetting.editHeader('titleBefore',this.value)"></label>
+        <label class="label">标题下方间距（像素）<input type="number" min="0" max="200" value="${s.titleAfter??24}" onchange="BookTypesetting.editHeader('titleAfter',this.value)"></label>
+        <button class="panel-btn dark" onclick="BookTypesetting.editHeader('deleteTitle')">删除主标题</button>
+        <label class="note"><input type="checkbox" ${s.metaVisible?'checked':''} onchange="BookTypesetting.editHeader('metaVisible',this.checked)"> 显示字数与阅读时间（可直接编辑或删除）</label>
+      </details>
       <details class="book-details"><summary>标题字体与全文粘贴</summary>
         <label class="label">标题字体<select id="bookTitleFont" onchange="BookTypesetting.selectTitle(this.value)">${options(s.titleFont)}</select></label>
         <label class="label">标题字重／笔画粗细<select id="bookTitleWeight" onchange="BookTypesetting.selectWeight('title',this.value)">${weightOptions(s.titleFont,s.titleWeight)}</select></label>
@@ -96,6 +104,17 @@ window.BookTypesetting = (() => {
         <label class="note"><input id="referenceFirstTitle" type="checkbox" checked> 首个段落作为标题</label>
         <button class="panel-btn dark" onclick="importReferenceText()">应用全文</button>
       </details>`;
+  }
+  function editHeader(key,value) {
+    capture(true);pushHistory();
+    const a=active();if(!a)return;
+    if(key==='deleteTitle'){state[a.c.title]='';if(a.tab==='side')state.sideTitle='';}
+    else if(key==='metaVisible'){
+      const count=Array.from(a.body.textContent.replace(/\s/g,'')).length;
+      patch({metaVisible:!!value,metaText:setting().metaText??`全文${count}字 | 阅读需${Math.max(1,Math.ceil(count/450))}分钟`});
+    }else if(key==='titleAlign'&&['left','center','right'].includes(value))patch({titleAlign:value});
+    else if(['titleBefore','titleAfter','titleInset'].includes(key))patch({[key]:Math.max(0,Math.min(key==='titleInset'?40:200,Number(value)||0))});
+    save();render();
   }
   function patch(value) {
     state.typography=Object.assign({},state.typography,{[state.tab]:Object.assign({},(state.typography||{})[state.tab],value)});
@@ -209,7 +228,7 @@ window.BookTypesetting = (() => {
     const legacy=Array.from(document.querySelectorAll('head style')).map(el=>el.textContent).join('\n');
     const title=a.card.querySelector('h1').textContent;
     const escaped=title.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-    const page='<!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>'+escaped+'</title><style>'+legacy+'</style><style data-book-typesetting="v26">'+bookCSS+'</style><style>:root{'+document.documentElement.style.cssText+'}body{margin:0}.edit{border-color:transparent!important;background:transparent!important;box-shadow:none!important}article{margin-inline:auto!important}</style><body>'+safeHTML(clone.outerHTML)+'</body></html>';
+    const page='<!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>'+escaped+'</title><style>'+legacy+'</style><style data-book-typesetting="v27">'+bookCSS+'</style><style>:root{'+document.documentElement.style.cssText+'}body{margin:0}.edit{border-color:transparent!important;background:transparent!important;box-shadow:none!important}article{margin-inline:auto!important}</style><body>'+safeHTML(clone.outerHTML)+'</body></html>';
     const url=URL.createObjectURL(new Blob([page],{type:'text/html;charset=utf-8'}));
     const link=document.createElement('a');link.href=url;link.download=(title.replace(/[\\/:*?"<>|]/g,'').slice(0,60)||'无墙之门')+'.html';link.click();
     setTimeout(()=>URL.revokeObjectURL(url),10000);showToast('阅读页已保存，字体选择与内容保留');
@@ -247,7 +266,15 @@ window.BookTypesetting = (() => {
         if(value&&el.style.getPropertyPriority(prop))el.style.setProperty(prop,value);
       });
     });
-    if(s.layout!=='book')return;
+    const title=a.card.querySelector('h1');
+    if(title){
+      title.classList.toggle('book-positioned-title',s.layout==='book'||s.titleAlign!==undefined||s.titleBefore!==undefined||s.titleAfter!==undefined||s.titleInset!==undefined);
+      a.card.style.setProperty('--title-align',s.titleAlign||'left');
+      a.card.style.setProperty('--title-before',(s.titleBefore??26)+'px');
+      a.card.style.setProperty('--title-after',(s.titleAfter??24)+'px');
+      a.card.style.setProperty('--title-inset',(s.titleInset||0)+'%');
+    }
+    if(s.layout!=='book'){a.card.querySelector('.reference-meta')?.remove();return;}
     a.body.querySelectorAll('p').forEach(p=>{
       const t=p.textContent.trim();
       const emphasis=p.querySelector('strong,b');
@@ -255,10 +282,14 @@ window.BookTypesetting = (() => {
       p.classList.toggle('reference-heading',t.length<=80 && (fullEmphasis || /^(?:#{1,6}\s+|[一二三四五六七八九十百]+[、.．：:]|[0-9]+[、.．）)]\s*|[（(][一二三四五六七八九十0-9]+[)）])/.test(t)));
     });
     let meta=a.card.querySelector('.reference-meta');
-    if(!meta){meta=document.createElement('div');meta.className='reference-meta';meta.setAttribute('aria-live','polite');a.card.querySelector('h1').after(meta);}
-    const count=Array.from(a.body.textContent.replace(/\s/g,'')).length;
-    const text=`全文${count}字 | 阅读需${Math.max(1,Math.ceil(count/450))}分钟`;
-    if(meta.textContent!==text)meta.textContent=text;
+    if(!s.metaVisible){if(meta)meta.remove();return;}
+    if(!meta){
+      meta=document.createElement('div');meta.className='reference-meta edit';
+      meta.contentEditable='true';meta.setAttribute('aria-label','字数与阅读时间，可编辑或删除');
+      meta.textContent=s.metaText??'';a.card.querySelector('h1').after(meta);
+      meta.addEventListener('focus',()=>pushHistory());
+      meta.addEventListener('input',()=>{patch({metaText:meta.textContent});save();});
+    }
   }
   function mount() {
     mounting=true;if(observer)observer.disconnect();
@@ -275,5 +306,5 @@ window.BookTypesetting = (() => {
   document.addEventListener('focusout',event=>{
     const a=active();if(a&&a.body&&a.body.contains(event.target)){capture(true);save();}
   });
-  return {setting,controls,selectFont,selectTitle,selectWeight,formatCurrent,original,downloadReading,capture,restore,mount,decorate,loadedFont,safeHTML,fonts};
+  return {editHeader,setting,controls,selectFont,selectTitle,selectWeight,formatCurrent,original,downloadReading,capture,restore,mount,decorate,loadedFont,safeHTML,fonts};
 })();

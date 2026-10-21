@@ -41,6 +41,26 @@ function signature(body){return ['strong','b','ul','ol','li','figure','img','fig
   }
   w.BookTypesetting.selectTitle('engraved');w.BookTypesetting.formatCurrent();
   assert.equal(w.BookTypesetting.setting().bodyFont,'song');assert.equal(w.BookTypesetting.setting().titleFont,'engraved');
+  // Header changes must persist without resurrecting deleted text or metadata.
+  assert(!d.querySelector('.reference-meta'));
+  w.BookTypesetting.editHeader('titleAlign','center');
+  w.BookTypesetting.editHeader('titleInset',12);
+  w.BookTypesetting.editHeader('titleBefore',45);
+  assert.equal(d.querySelector('article').style.getPropertyValue('--title-align'),'center');
+  assert.equal(d.querySelector('article').style.getPropertyValue('--title-inset'),'12%');
+  w.BookTypesetting.editHeader('metaVisible',true);
+  let meta=d.querySelector('.reference-meta');assert.equal(meta.contentEditable,'true');
+  meta.textContent='自己写的说明';meta.dispatchEvent(new w.Event('input',{bubbles:true}));run('render()');
+  assert.equal(d.querySelector('.reference-meta').textContent,'自己写的说明');
+  meta=d.querySelector('.reference-meta');meta.textContent='';meta.dispatchEvent(new w.Event('input',{bubbles:true}));run('render()');
+  assert.equal(d.querySelector('.reference-meta').textContent,'');
+  w.BookTypesetting.editHeader('metaVisible',false);assert(!d.querySelector('.reference-meta'));
+  w.BookTypesetting.editHeader('deleteTitle');run('render()');assert.equal(d.querySelector('article h1').textContent,'');
+  const savedHeader=w.localStorage.getItem('wqzm_state'),reopened=await create(savedHeader);
+  assert.equal(reopened.window.document.querySelector('article h1').textContent,'');
+  assert(!reopened.window.document.querySelector('.reference-meta'));reopened.window.close();
+  const title=d.querySelector('article h1');title.textContent='重新编辑的标题';title.dispatchEvent(new w.Event('input',{bubbles:true}));run('render()');
+  assert.equal(d.querySelector('article h1').textContent,'重新编辑的标题');
   // Plain-text editing after rich editing intentionally replaces only the current body.
   if(tab!=='side'){
    const key=tab==='news'?'article':'writerText';run(`state.${key}='新的正文';liveUpdate('${key}',state.${key});save();render()`);
@@ -91,7 +111,7 @@ function signature(body){return ['strong','b','ul','ol','li','figure','img','fig
  w.BookTypesetting.capture(true);run('save()');
  await w.BookTypesetting.downloadReading();
  const page=await new Promise((resolve,reject)=>{const r=new w.FileReader();r.onload=()=>resolve(r.result);r.onerror=reject;r.readAsText(exported)});
- assert(downloadName.endsWith('.html'));assert(page.includes('data-book-typesetting="v26"'));assert(page.includes('https://hehxxbdsjszjs.github.io/wuqiangzhimen-newsroom/fonts/mobile/engraved-0.woff2'));
+ assert(downloadName.endsWith('.html'));assert(page.includes('data-book-typesetting="v27"'));assert(page.includes('https://hehxxbdsjszjs.github.io/wuqiangzhimen-newsroom/fonts/mobile/engraved-0.woff2'));
  assert(page.includes('BookEngraved'));assert(page.includes('BookSong'));
  assert(page.includes('<strong>'));assert(page.includes('<ul>'));assert(page.includes('正文图片'));
  const readingDOM=new JSDOM(page);assert(!readingDOM.window.document.querySelector('[contenteditable]'));assert(!readingDOM.window.document.querySelector('script'));readingDOM.window.close();

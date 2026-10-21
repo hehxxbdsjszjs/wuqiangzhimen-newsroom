@@ -10,7 +10,7 @@
 .reference-card .sp-image-block:has(.hero.empty){display:none}
 .reference-card .hero:not(.empty){width:100%!important;max-width:100%!important;margin:24px 0!important}
 .reference-card .hero.empty{height:0!important;padding:0!important;margin:0!important}
-.reference-card h1,.reference-card .sp-title-edit{display:block!important;font-family:var(--heading-font)!important;font-size:clamp(32px,10.9vw,84px)!important;font-weight:400!important;font-synthesis:none;line-height:1.5!important;letter-spacing:normal!important;word-spacing:normal!important;text-align:right!important;padding:0!important;margin:64px 0 24px!important;background:transparent!important;color:inherit!important;box-shadow:none!important;max-width:100%;min-width:0;overflow-wrap:anywhere}
+.reference-card h1,.reference-card .sp-title-edit{display:block!important;font-family:var(--heading-font)!important;font-size:clamp(32px,10.9vw,84px)!important;font-weight:400!important;font-synthesis:none;line-height:1.5!important;letter-spacing:normal!important;word-spacing:normal!important;text-align:var(--title-align,left)!important;padding:0!important;margin:var(--title-before,26px) 0 var(--title-after,24px)!important;background:transparent!important;color:inherit!important;box-shadow:none!important;max-width:100%;min-width:0;overflow-wrap:anywhere}
 .reference-meta{font:400 16px/1.6 var(--reading-font);text-align:right;margin:0 0 78px;letter-spacing:normal;text-indent:0}
 .reference-card .cols{columns:auto!important;column-rule:0!important}
 .reference-card .cols,.reference-card [data-edit="writerBody"],.reference-card .sp-writer{font-family:var(--reading-font)!important;font-size:var(--book-reading-size)!important;font-weight:400;line-height:1.8!important;text-align:justify;letter-spacing:normal!important;word-spacing:normal;min-width:0;max-width:100%}
@@ -21,7 +21,7 @@
 .reference-card li,.reference-card li p,.reference-card figcaption,.reference-card blockquote p{text-indent:0!important}
 .reference-card img,.reference-card video,.reference-card svg{max-width:100%;height:auto}.reference-card figure{margin:1em 0}.reference-card figcaption{font-size:.8em;color:#5c584e;text-align:center;line-height:1.7}
 .reference-card table{max-width:100%;table-layout:fixed;overflow-wrap:anywhere}.reference-card pre{max-width:100%;white-space:pre-wrap;overflow-wrap:anywhere}.reference-card blockquote{margin:1em 0;padding-inline-start:1em;border-inline-start:2px solid #c3bcae}
-@media(max-width:600px){.reference-card{--book-reading-size:clamp(13px,calc(var(--book-size,28px) * .66),26px);width:calc(100% - 20px)!important;padding:44px 22px 50px!important;margin:16px auto!important}.reference-card h1,.reference-card .sp-title-edit{font-size:clamp(30px,10.9vw,62px)!important;margin-top:26px!important}.reference-meta{font-size:12px;margin-bottom:58px}.reference-card .water{font-size:10px}}
+@media(max-width:600px){.reference-card{--book-reading-size:clamp(13px,calc(var(--book-size,28px) * .66),26px);width:calc(100% - 20px)!important;padding:44px 22px 50px!important;margin:16px auto!important}.reference-card h1,.reference-card .sp-title-edit{font-size:clamp(30px,10.9vw,62px)!important;margin-top:var(--title-before,26px)!important}.reference-meta{font-size:12px;margin-bottom:58px}.reference-card .water{font-size:10px}}
 @media print{.reference-card{box-shadow:none!important;margin:0 auto!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}}
 .custom-title-font h1 *{font-family:var(--heading-font)!important}
 .custom-body-font .cols *,.custom-body-font [data-edit="writerBody"],.custom-body-font [data-edit="writerBody"] *,.custom-body-font .sp-writer *{font-family:var(--reading-font)!important}
@@ -42,3 +42,8 @@
 :is(.custom-title-font,.reference-card) :is(h1,.sp-title-edit) *{font-family:var(--heading-font)!important;font-weight:var(--title-weight,400)!important;font-variation-settings:"wght" var(--title-weight,400)!important}
 
 .book-load-status{font:13px/1.5 system-ui,sans-serif!important;letter-spacing:normal!important;text-indent:0!important;padding:10px 12px;margin:0 0 14px;background:#eee4cf;color:#443a27;border:1px solid #cbbf9f}.book-load-status[hidden]{display:none!important}.book-load-status button{margin-left:8px;padding:5px 8px;font:inherit}
+
+/* User-controlled title position; empty titles never regenerate or occupy a title block. */
+.book-positioned-title{text-align:var(--title-align,left)!important;margin-top:var(--title-before,26px)!important;margin-bottom:var(--title-after,24px)!important;margin-left:var(--title-inset,0%)!important;width:calc(100% - var(--title-inset,0%))!important;box-sizing:border-box}
+h1.book-positioned-title:empty,h1.book-positioned-title:has(>br:only-child){min-height:0!important;height:0!important;margin-top:0!important;margin-bottom:0!important;padding:0!important;overflow:hidden}
+.reference-meta:empty{margin:0;min-height:0}
