@@ -89,6 +89,8 @@ window.BookTypesetting = (() => {
       <button class="panel-btn dark" onclick="BookTypesetting.downloadReading()">保存阅读页</button>
       <p class="note" id="bookFontStatus" aria-live="polite">${chosen?'字体将在编辑区域加载':'未选择时，保留原有字体与设置。'}</p>
       <details class="book-details" open><summary>标题位置与文字编辑</summary>
+        <label class="label">标题字号（像素，留空为自动）<input id="bookTitleSize" type="number" inputmode="numeric" min="16" max="96" step="1" placeholder="自动" value="${s.titleSize??''}" onfocus="pushHistory()" oninput="BookTypesetting.setTitleSize(this.value)"></label>
+        <button class="panel-btn dark" onclick="BookTypesetting.setTitleSize('');render()">标题字号恢复自动</button>
         <label class="label">标题对齐<select onchange="BookTypesetting.editHeader('titleAlign',this.value)">${[['left','居左'],['center','居中'],['right','居右']].map(([v,t])=>`<option value="${v}" ${(s.titleAlign||'left')===v?'selected':''}>${t}</option>`).join('')}</select></label>
         <label class="label">标题左侧位置（%）<input type="number" min="0" max="40" value="${s.titleInset||0}" onchange="BookTypesetting.editHeader('titleInset',this.value)"></label>
         <label class="label">标题上方间距（像素）<input type="number" min="0" max="200" value="${s.titleBefore??26}" onchange="BookTypesetting.editHeader('titleBefore',this.value)"></label>
@@ -104,6 +106,12 @@ window.BookTypesetting = (() => {
         <label class="note"><input id="referenceFirstTitle" type="checkbox" checked> 首个段落作为标题</label>
         <button class="panel-btn dark" onclick="importReferenceText()">应用全文</button>
       </details>`;
+  }
+  function setTitleSize(value) {
+    if(value!==''&&!Number.isFinite(Number(value)))return;
+    capture(true);
+    patch({titleSize:value===''?null:Math.max(16,Math.min(96,Number(value)))});
+    decorate();save();
   }
   function editHeader(key,value) {
     capture(true);pushHistory();
@@ -228,7 +236,7 @@ window.BookTypesetting = (() => {
     const legacy=Array.from(document.querySelectorAll('head style')).map(el=>el.textContent).join('\n');
     const title=a.card.querySelector('h1').textContent;
     const escaped=title.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-    const page='<!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>'+escaped+'</title><style>'+legacy+'</style><style data-book-typesetting="v28">'+bookCSS+'</style><style>:root{'+document.documentElement.style.cssText+'}body{margin:0}.edit{border-color:transparent!important;background:transparent!important;box-shadow:none!important}article{margin-inline:auto!important}</style><body>'+safeHTML(clone.outerHTML)+'</body></html>';
+    const page='<!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>'+escaped+'</title><style>'+legacy+'</style><style data-book-typesetting="v29">'+bookCSS+'</style><style>:root{'+document.documentElement.style.cssText+'}body{margin:0}.edit{border-color:transparent!important;background:transparent!important;box-shadow:none!important}article{margin-inline:auto!important}</style><body>'+safeHTML(clone.outerHTML)+'</body></html>';
     const url=URL.createObjectURL(new Blob([page],{type:'text/html;charset=utf-8'}));
     const link=document.createElement('a');link.href=url;link.download=(title.replace(/[\\/:*?"<>|]/g,'').slice(0,60)||'无墙之门')+'.html';link.click();
     setTimeout(()=>URL.revokeObjectURL(url),10000);showToast('阅读页已保存，字体选择与内容保留');
@@ -261,14 +269,16 @@ window.BookTypesetting = (() => {
       });
     });
     if(chosen.titleFont||s.layout==='book')a.card.querySelectorAll('h1[style],h1 [style],.sp-title-edit[style],.sp-title-edit [style]').forEach(el=>{
-      ['font-family','font-weight','font-variation-settings',...(s.layout==='book'?['color','-webkit-text-fill-color','opacity','height','max-height','overflow','white-space']:[])].forEach(prop=>{
+      ['font-family','font-weight','font-variation-settings',...(s.layout==='book'?['color','-webkit-text-fill-color','opacity','height','max-height','overflow','white-space','font-size']:[])].forEach(prop=>{
         const value=el.style.getPropertyValue(prop);
         if(value&&el.style.getPropertyPriority(prop))el.style.setProperty(prop,value);
       });
     });
     const title=a.card.querySelector('h1');
     if(title){
-      title.classList.toggle('book-positioned-title',s.layout==='book'||s.titleAlign!==undefined||s.titleBefore!==undefined||s.titleAfter!==undefined||s.titleInset!==undefined);
+      title.classList.toggle('book-positioned-title',s.layout==='book'||s.titleAlign!==undefined||s.titleBefore!==undefined||s.titleAfter!==undefined||s.titleInset!==undefined||s.titleSize!=null);
+      if(s.titleSize!=null)a.card.style.setProperty('--title-size',Math.max(16,Math.min(96,Number(s.titleSize)))+'px');
+      else a.card.style.removeProperty('--title-size');
       a.card.style.setProperty('--title-align',s.titleAlign||'left');
       const titleLength=Array.from(title.textContent.replace(/\s/g,'')).length;
       // Keep short Chinese titles together at phone widths; longer titles retain natural wrapping.
@@ -310,5 +320,5 @@ window.BookTypesetting = (() => {
   document.addEventListener('focusout',event=>{
     const a=active();if(a&&a.body&&a.body.contains(event.target)){capture(true);save();}
   });
-  return {editHeader,setting,controls,selectFont,selectTitle,selectWeight,formatCurrent,original,downloadReading,capture,restore,mount,decorate,loadedFont,safeHTML,fonts};
+  return {setTitleSize,editHeader,setting,controls,selectFont,selectTitle,selectWeight,formatCurrent,original,downloadReading,capture,restore,mount,decorate,loadedFont,safeHTML,fonts};
 })();

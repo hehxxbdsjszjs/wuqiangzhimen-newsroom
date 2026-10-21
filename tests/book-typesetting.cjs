@@ -50,6 +50,10 @@ function signature(body){return ['strong','b','ul','ol','li','figure','img','fig
   assert.equal(w.BookTypesetting.setting().bodyFont,'song');assert.equal(w.BookTypesetting.setting().titleFont,'engraved');
   // Header changes must persist without resurrecting deleted text or metadata.
   assert(!d.querySelector('.reference-meta'));
+  w.BookTypesetting.setTitleSize(24);
+  assert.equal(d.querySelector('article').style.getPropertyValue('--title-size'),'24px');
+  w.BookTypesetting.formatCurrent();assert.equal(w.BookTypesetting.setting().titleSize,24);
+  run('render()');assert.equal(d.querySelector('#bookTitleSize').value,'24');
   w.BookTypesetting.editHeader('titleAlign','center');
   w.BookTypesetting.editHeader('titleInset',12);
   w.BookTypesetting.editHeader('titleBefore',45);
@@ -65,6 +69,7 @@ function signature(body){return ['strong','b','ul','ol','li','figure','img','fig
   w.BookTypesetting.editHeader('deleteTitle');run('render()');assert.equal(d.querySelector('article h1').textContent,'');
   const savedHeader=w.localStorage.getItem('wqzm_state'),reopened=await create(savedHeader);
   assert.equal(reopened.window.document.querySelector('article h1').textContent,'');
+  assert.equal(reopened.window.BookTypesetting.setting().titleSize,24);
   assert(!reopened.window.document.querySelector('.reference-meta'));reopened.window.close();
   const title=d.querySelector('article h1');title.textContent='重新编辑的标题';title.dispatchEvent(new w.Event('input',{bubbles:true}));run('render()');
   assert.equal(d.querySelector('article h1').textContent,'重新编辑的标题');
@@ -118,7 +123,7 @@ function signature(body){return ['strong','b','ul','ol','li','figure','img','fig
  w.BookTypesetting.capture(true);run('save()');
  await w.BookTypesetting.downloadReading();
  const page=await new Promise((resolve,reject)=>{const r=new w.FileReader();r.onload=()=>resolve(r.result);r.onerror=reject;r.readAsText(exported)});
- assert(downloadName.endsWith('.html'));assert(page.includes('data-book-typesetting="v28"'));assert(page.includes('https://hehxxbdsjszjs.github.io/wuqiangzhimen-newsroom/fonts/mobile/engraved-0.woff2'));
+ assert(downloadName.endsWith('.html'));assert(page.includes('data-book-typesetting="v29"'));assert(page.includes('https://hehxxbdsjszjs.github.io/wuqiangzhimen-newsroom/fonts/mobile/engraved-0.woff2'));
  assert(page.includes('BookEngraved'));assert(page.includes('BookSong'));
  assert(page.includes('<strong>'));assert(page.includes('<ul>'));assert(page.includes('正文图片'));
  const readingDOM=new JSDOM(page);assert(!readingDOM.window.document.querySelector('[contenteditable]'));assert(!readingDOM.window.document.querySelector('script'));readingDOM.window.close();
