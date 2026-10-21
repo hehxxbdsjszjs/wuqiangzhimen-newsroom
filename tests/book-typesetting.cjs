@@ -19,6 +19,7 @@ function signature(body){return ['strong','b','ul','ol','li','figure','img','fig
  const dom=await create(),w=dom.window,d=w.document;const run=x=>w.eval(x),results=[];
  try{
  assert(!d.querySelector('.reference-card,.custom-title-font,.custom-body-font'));
+ assert.equal(d.querySelector('#bookFontSelect').value,'');
  const original={bodySize:run('state.bodySize'),paper:run('state.paper'),cols:run('state.cols'),image:run('state.image')};
  for(const tab of ['news','side','write']){
   run(`state.tab='${tab}';render();isApplyingHistory=false`);

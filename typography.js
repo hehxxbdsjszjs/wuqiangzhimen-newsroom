@@ -68,7 +68,7 @@ window.BookTypesetting = (() => {
   function controls() {
     const s=setting(),chosen=(state.typography||{})[state.tab];
     return `<b>字体与一键排版</b>
-      <label class="label">字体选择<select id="bookFontSelect" onchange="BookTypesetting.selectFont(this.value)">${!chosen?'<option value="" selected disabled>保持原有字体 · 请选择</option>':''}${options(s.bodyFont)}</select></label>
+      <label class="label">字体选择<select id="bookFontSelect" onchange="BookTypesetting.selectFont(this.value)">${!chosen?'<option value="" selected disabled>保持原有字体 · 请选择</option>':''}${options(!chosen?'':s.bodyFont)}</select></label>
       <button class="panel-btn book-format-button" onclick="BookTypesetting.formatCurrent()">一键排版</button>
       <button class="panel-btn dark" onclick="BookTypesetting.original()">恢复原有版式</button>
       <button class="panel-btn dark" onclick="BookTypesetting.downloadReading()">保存阅读页</button>
