@@ -35,10 +35,10 @@
 
 /* Pasted inline weights must not override the reading control, including on WebKit. */
 :is(.custom-body-font,.reference-card) :is(.cols,[data-edit="writerBody"],.sp-writer),
-:is(.custom-body-font,.reference-card) :is(.cols,[data-edit="writerBody"],.sp-writer) :where(*){font-weight:var(--body-weight,400)!important;font-variation-settings:"wght" var(--body-weight,400)!important}
+:is(.custom-body-font,.reference-card) :is(.cols,[data-edit="writerBody"],.sp-writer) :where(*){font-family:var(--reading-font)!important;font-weight:var(--body-weight,400)!important;font-variation-settings:"wght" var(--body-weight,400)!important}
 :is(.custom-body-font,.reference-card) :is(.cols,[data-edit="writerBody"],.sp-writer) :is(strong,b,.book-inline-emphasis,.reference-heading,h2,h3),
 :is(.custom-body-font,.reference-card) :is(.cols,[data-edit="writerBody"],.sp-writer) :is(strong,b,.book-inline-emphasis,.reference-heading,h2,h3) *{font-weight:var(--body-bold-weight,700)!important;font-variation-settings:"wght" var(--body-bold-weight,700)!important}
 :is(.custom-title-font,.reference-card) :is(h1,.sp-title-edit),
-:is(.custom-title-font,.reference-card) :is(h1,.sp-title-edit) *{font-weight:var(--title-weight,400)!important;font-variation-settings:"wght" var(--title-weight,400)!important}
+:is(.custom-title-font,.reference-card) :is(h1,.sp-title-edit) *{font-family:var(--heading-font)!important;font-weight:var(--title-weight,400)!important;font-variation-settings:"wght" var(--title-weight,400)!important}
 
 .book-load-status{font:13px/1.5 system-ui,sans-serif!important;letter-spacing:normal!important;text-indent:0!important;padding:10px 12px;margin:0 0 14px;background:#eee4cf;color:#443a27;border:1px solid #cbbf9f}.book-load-status[hidden]{display:none!important}.book-load-status button{margin-left:8px;padding:5px 8px;font:inherit}

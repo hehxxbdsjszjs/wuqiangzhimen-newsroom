@@ -199,7 +199,8 @@ window.BookTypesetting = (() => {
     let bookCSS;
     try {
       const chunks=await Promise.all(['mobile-fonts.css','typography.css'].map(async file=>{
-        const response=await fetch(new URL(file,location.href));
+        const link=Array.from(document.querySelectorAll('link[rel=stylesheet]')).find(el=>new URL(el.href,location.href).pathname.endsWith('/'+file));
+        const response=await fetch(new URL(link?link.href:file,location.href),{cache:'no-cache'});
         if(!response.ok)throw Error('排版样式读取失败');
         return response.text();
       }));
@@ -208,7 +209,7 @@ window.BookTypesetting = (() => {
     const legacy=Array.from(document.querySelectorAll('head style')).map(el=>el.textContent).join('\n');
     const title=a.card.querySelector('h1').textContent;
     const escaped=title.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-    const page='<!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>'+escaped+'</title><style>'+legacy+'</style><style data-book-typesetting="v25">'+bookCSS+'</style><style>:root{'+document.documentElement.style.cssText+'}body{margin:0}.edit{border-color:transparent!important;background:transparent!important;box-shadow:none!important}article{margin-inline:auto!important}</style><body>'+safeHTML(clone.outerHTML)+'</body></html>';
+    const page='<!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>'+escaped+'</title><style>'+legacy+'</style><style data-book-typesetting="v26">'+bookCSS+'</style><style>:root{'+document.documentElement.style.cssText+'}body{margin:0}.edit{border-color:transparent!important;background:transparent!important;box-shadow:none!important}article{margin-inline:auto!important}</style><body>'+safeHTML(clone.outerHTML)+'</body></html>';
     const url=URL.createObjectURL(new Blob([page],{type:'text/html;charset=utf-8'}));
     const link=document.createElement('a');link.href=url;link.download=(title.replace(/[\\/:*?"<>|]/g,'').slice(0,60)||'无墙之门')+'.html';link.click();
     setTimeout(()=>URL.revokeObjectURL(url),10000);showToast('阅读页已保存，字体选择与内容保留');
@@ -235,7 +236,16 @@ window.BookTypesetting = (() => {
     if(chosen.bodyFont||s.layout==='book')a.body.querySelectorAll('[style],.book-inline-emphasis').forEach(el=>{
       const value=el.style.fontWeight;
       el.classList.toggle('book-inline-emphasis',/^(bold|bolder)$/i.test(value)||Number(value)>=600);
-      if(value&&el.style.getPropertyPriority('font-weight'))el.style.setProperty('font-weight',value);
+      ['font-weight','font-family','font-variation-settings'].forEach(prop=>{
+        const current=el.style.getPropertyValue(prop);
+        if(current&&el.style.getPropertyPriority(prop))el.style.setProperty(prop,current);
+      });
+    });
+    if(chosen.titleFont||s.layout==='book')a.card.querySelectorAll('h1[style],h1 [style],.sp-title-edit[style],.sp-title-edit [style]').forEach(el=>{
+      ['font-family','font-weight','font-variation-settings'].forEach(prop=>{
+        const value=el.style.getPropertyValue(prop);
+        if(value&&el.style.getPropertyPriority(prop))el.style.setProperty(prop,value);
+      });
     });
     if(s.layout!=='book')return;
     a.body.querySelectorAll('p').forEach(p=>{
