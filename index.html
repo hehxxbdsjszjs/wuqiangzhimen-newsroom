@@ -5,7 +5,7 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
-  <meta name="app-version" content="v20-opt-in-type">
+  <meta name="app-version" content="v21-shared-book-typesetting">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="mobile-web-app-capable" content="yes" />
@@ -391,29 +391,8 @@
     .panel::-webkit-scrollbar,.work::-webkit-scrollbar,.sp-tabs::-webkit-scrollbar,.tabs::-webkit-scrollbar{height:6px;width:6px}
     .panel::-webkit-scrollbar-thumb,.work::-webkit-scrollbar-thumb,.sp-tabs::-webkit-scrollbar-thumb,.tabs::-webkit-scrollbar-thumb{background:#888;border-radius:3px}
 
-    @font-face{font-family:ReferenceXiaoWei;src:url('fonts/title.woff2') format('woff2');font-display:swap;font-weight:400 900}
-    @font-face{font-family:ReferenceSong;src:url('fonts/body.woff2') format('woff2');font-display:swap;font-weight:400 900}
-    :root{--reading-font:ReferenceSong,serif;--heading-font:ReferenceXiaoWei,serif}
-    .custom-title-font h1,.custom-title-font .sp-title-edit{font-family:var(--heading-font)}
-    .custom-body-font .cols,.custom-body-font .cols p,.custom-body-font.story p,.custom-body-font .sp-writer,.custom-body-font .sp-writer p{font-family:var(--reading-font)}
-    .reference-card{width:min(768px,calc(100% - 32px))!important;padding:54px 50px 70px!important;display:block!important;color:#191917!important;background-color:#fafafa!important;background-image:radial-gradient(ellipse at 20% 30%,#edece733,transparent 65%)!important;min-height:0!important;box-sizing:border-box}
-    .reference-card[data-layout="paper"]{background-color:#f5f0e4!important;background-image:radial-gradient(ellipse at 20% 35%,#c8b58c1c,transparent 65%),radial-gradient(ellipse at 80% 75%,#b4b1a21a,transparent 60%)!important}
-    .reference-card .mast,.reference-card .rule,.reference-card .kicker,.reference-card .deck,.reference-card .by,.reference-card .tag,.reference-card .sp-mast-band,.reference-card .sp-tag-edit,.reference-card .stamp-wrap,.reference-card .water,.reference-card .hero.empty{display:none!important}
-    .reference-card .sp-body,.reference-card .sp-header,.reference-card .sp-writer{padding:0!important;gap:0!important;min-height:0!important}
-    .reference-card .sp-image-block:has(.hero.empty){display:none}
-    .reference-card .hero:not(.empty){margin:24px 0!important;width:100%!important;max-width:none!important}
-    .reference-card h1,.reference-card .sp-title-edit{display:block!important;font-family:var(--heading-font)!important;font-size:clamp(30px,5vw,48px)!important;font-weight:400!important;line-height:1.5!important;letter-spacing:.02em!important;padding:0!important;margin:0 0 30px!important;background:transparent!important;color:inherit!important;box-shadow:none!important;overflow-wrap:anywhere}
-    .reference-card[data-layout="paper"] h1{font-size:clamp(36px,7vw,76px)!important;text-align:right;line-height:1.55!important;margin:55px 0 24px!important}
-    .reference-meta{font:15px/1.6 var(--reading-font);text-align:right;margin:0 0 64px}
-    .reference-card[data-layout="white"] .reference-meta{display:none}
-    .reference-card .cols{columns:auto!important;column-rule:0!important}
-    .reference-card .cols,.reference-card .sp-writer{font-size:var(--body-size)!important;line-height:1.85!important;letter-spacing:.035em!important;text-align:justify!important}
-    .reference-card .cols p,.reference-card .story p,.reference-card p,.reference-card .sp-writer p{font-family:var(--reading-font)!important;font-size:var(--body-size)!important;line-height:1.85!important;font-weight:400;margin:0 0 1em!important;letter-spacing:.035em;text-align:justify;overflow-wrap:anywhere;text-indent:0}
-    .reference-card[data-layout="paper"] p{text-indent:2em}
-    .reference-card p.reference-heading{font-weight:700!important;font-size:calc(var(--body-size) * 1.15)!important;line-height:1.5!important;margin:1.25em 0 1em!important;text-indent:0!important;text-align:left}
-    .reference-import{height:120px!important}
-    @media(max-width:768px){.reference-card{--body-size:calc(var(--reference-body-size) * .65);width:calc(100% - 20px)!important;margin:16px auto!important;padding:28px 24px 42px!important}.reference-card[data-layout="paper"] h1{margin-top:35px!important}.reference-meta{font-size:12px;margin-bottom:50px}}
   </style>
+  <link rel="stylesheet" href="typography.css?v=21">
 
 <!-- Service Worker 已彻底移除，避免缓存导致页面跳动/无限刷新 -->
 <script>
@@ -434,7 +413,7 @@ if ('serviceWorker' in navigator) {
   <nav class="nav">
     <span class="mark">N</span>
     <span class="brand">Newsroom Studio</span>
-    <span style="font-size:9px;color:#999;background:#f0f0f0;padding:1px 6px;border-radius:3px;margin-left:4px">v20</span>
+    <span style="font-size:9px;color:#999;background:#f0f0f0;padding:1px 6px;border-radius:3px;margin-left:4px">v21</span>
     <div class="tabs">
       <button data-tab="news" class="on">新闻排版</button>
       <button data-tab="write">写文章</button>
@@ -446,6 +425,7 @@ if ('serviceWorker' in navigator) {
   <div class="toast" id="toast"></div>
 
 
+  <script src="typography.js?v=21"></script>
   <script>
     /* ============================================================
        无墙之门 · Newsroom Studio — v10 (持久化存储)
@@ -689,6 +669,7 @@ if ('serviceWorker' in navigator) {
     // ---- 持久化（双重存储；v16 起防抖写入，避免高频输入阻塞 UI）----
     let _saveTimer = null;
     function save() {
+      BookTypesetting.capture();
       state._savedAt = Date.now();
       var json = JSON.stringify(state);
       // localStorage 同步存储（快速恢复）
@@ -716,8 +697,8 @@ if ('serviceWorker' in navigator) {
       const r = document.documentElement.style;
       const typography = getTypography();
       r.setProperty('--reference-body-size', (typography.bodySize || 28) + 'px');
-      r.setProperty('--reading-font', typography.bodyFont === 'xiaowei' ? 'ReferenceXiaoWei, serif' : 'ReferenceSong, serif');
-      r.setProperty('--heading-font', typography.titleFont === 'song' ? 'ReferenceSong, serif' : 'ReferenceXiaoWei, serif');
+      r.setProperty('--reading-font', (typography.bodyFont === 'engraved' ? 'BookEngraved' : 'BookSong') + ', BookSong, serif');
+      r.setProperty('--heading-font', (typography.titleFont === 'song' ? 'BookSong' : 'BookEngraved') + ', BookSong, serif');
       r.setProperty('--ink', state.ink);
       r.setProperty('--red', state.red);
       r.setProperty('--paper', state.paper);
@@ -1008,7 +989,7 @@ if ('serviceWorker' in navigator) {
       if (cols) {
         const ps = cols.querySelectorAll('p[data-edit="articleP"]');
         if (ps.length > 0) {
-          state.article = Array.from(ps).map(p => p.textContent).join('\n\n');
+          state.article = serializeContent(cols);
         }
       }
       // 所有 data-edit 元素
@@ -1109,7 +1090,7 @@ if ('serviceWorker' in navigator) {
       loadH2C(async function() {
       try {
         if(getTypography().layout!=='original' || ((state.typography||{})[state.tab]||{}).titleFont || ((state.typography||{})[state.tab]||{}).bodyFont) {
-        await Promise.all([document.fonts.load('24px ReferenceSong'),document.fonts.load('48px ReferenceXiaoWei')]);
+        await Promise.all([BookTypesetting.loadedFont(getTypography().bodyFont),BookTypesetting.loadedFont(getTypography().titleFont)]);
         await document.fonts.ready;
         }
       } catch(err) {showToast('字体尚未加载成功，请联网后重试');return;}
@@ -1332,38 +1313,9 @@ if ('serviceWorker' in navigator) {
       showToast('横杠已插入');
     };
 
-    function getTypography() {
-      return Object.assign({titleFont:'xiaowei',bodyFont:'song',layout:'original'}, (state.typography || {})[state.tab]);
-    }
-    function fontOptions(value) {
-      return `<option disabled ${!value?'selected':''} value="">保持原有字体（未调整）</option>` + [['xiaowei','站酷小薇体 · 书卷'],['song','思源宋体 · 正文']].map(([v,label]) => `<option value="${v}" ${value===v?'selected':''}>${label}</option>`).join('');
-    }
-    function setTypography(key,value) {
-      syncAllToState();pushHistory();
-      state.typography = Object.assign({},state.typography,{[state.tab]:Object.assign({},(state.typography||{})[state.tab],{[key]:value})});
-      save();render();
-    }
-    function decorateReference() {
-      const card=document.querySelector('#news-card,#story-card,#sideproject-card');
-      if(!card)return;
-      const style=getTypography();
-      const selected=(state.typography||{})[state.tab]||{};
-      card.classList.toggle('custom-title-font',!!selected.titleFont);
-      card.classList.toggle('custom-body-font',!!selected.bodyFont);
-      card.classList.toggle('reference-card',style.layout!=='original');
-      card.dataset.layout=style.layout;
-      const body=card.querySelector('.cols,[data-edit="writerBody"],#sideWriter');
-      if(!body || style.layout==='original')return;
-      body.querySelectorAll('p').forEach(p=>{
-        const text=p.textContent.trim();
-        p.classList.toggle('reference-heading',text.length<=80 && /^(?:#{1,6}\s+|[一二三四五六七八九十百]+[、.．：:]|[0-9]+[、.．）)]\s*|[（(][一二三四五六七八九十0-9]+[)）])/.test(text));
-      });
-      let meta=card.querySelector('.reference-meta');
-      if(!meta){meta=document.createElement('div');meta.className='reference-meta';card.querySelector('h1').after(meta);}
-      meta.hidden=style.layout==='original';
-      const count=(body.textContent||'').replace(/\s/g,'').length;
-      meta.textContent=`全文${count}字 | 阅读需${Math.max(1,Math.ceil(count/450))}分钟`;
-    }
+    function getTypography() { return BookTypesetting.setting(); }
+    function decorateReference() { BookTypesetting.decorate(); }
+
     function importReferenceText() {
       const input=document.getElementById('referenceImport');
       const paragraphs=referenceParagraphsFromText(input.value);
@@ -1376,7 +1328,8 @@ if ('serviceWorker' in navigator) {
       }
       if(state.tab==='side')state.sideArticle=renderBlocksHtml(blocksFromParagraphs(paragraphs));
       else state[state.tab==='news'?'article':'writerText']=paragraphs.join('\n\n');
-      if(getTypography().layout==='original')state.typography=Object.assign({},state.typography,{[state.tab]:Object.assign(getTypography(),{layout:'white'})});
+      if(getTypography().layout==='original')state.typography=Object.assign({},state.typography,{[state.tab]:Object.assign(getTypography(),{layout:'book'})});
+      delete (state.typographyDocuments||{})[state.tab];
       save();render();showToast('全文已自动排版，可撤销');
     }
 
@@ -1384,15 +1337,7 @@ if ('serviceWorker' in navigator) {
     function styleControls() {
       return `
         <div class="panel-section">
-          <b>字体与自动排版</b>
-          <label class="label">标题字体<select onchange="setTypography('titleFont',this.value)">${fontOptions(((state.typography||{})[state.tab]||{}).titleFont)}</select></label>
-          <label class="label">正文字体<select onchange="setTypography('bodyFont',this.value)">${fontOptions(((state.typography||{})[state.tab]||{}).bodyFont)}</select></label>
-          <label class="label">参考排版<select onchange="setTypography('layout',this.value)"><option value="paper" ${getTypography().layout==='paper'?'selected':''}>图一 · 米纸书卷（首行缩进）</option><option value="white" ${getTypography().layout==='white'?'selected':''}>图二 · 白纸阅读（段间留白）</option><option value="original" ${getTypography().layout==='original'?'selected':''}>原有版式</option></select></label>
-          <p class="note">仅提供站酷小薇体、思源宋体两种开源字体，接近参考图，非原图字体鉴定。三个板块分别记忆设置。不选择时保持原有字体和版式。</p>
-          <label class="label">粘贴全文 · 自动排版<textarea id="referenceImport" class="reference-import" placeholder="把全文粘贴到这里，自动整理段落。可勾选首行作为标题。"></textarea></label>
-          <label class="note"><input id="referenceFirstTitle" type="checkbox" checked> 首个段落作为标题</label>
-          <button class="panel-btn dark" onclick="importReferenceText()">应用全文排版</button>
-          <p class="note">粘贴即应用，替换本板块正文；可撤销。识别「一、」「1.」「#」开头的小标题。不会改写原文。</p>
+          ${BookTypesetting.controls()}
           <b>排版调节</b>
           <label class="label">正文字号
             <div class="range-row">
@@ -1423,6 +1368,7 @@ if ('serviceWorker' in navigator) {
         state.typography=Object.assign({},state.typography,{[state.tab]:Object.assign({},(state.typography||{})[state.tab],{bodySize:val})});
       } else state[key] = val;
       applyTheme();
+      BookTypesetting.decorate();
       save();
       if (key === 'bodySize') {
         const s = document.getElementById('bodySizeVal');
@@ -1939,14 +1885,8 @@ if ('serviceWorker' in navigator) {
       applyTheme();
       app.innerHTML = state.tab === 'news' ? newsView() :
                       state.tab === 'write' ? writeView() : sideView();
+      BookTypesetting.mount();
       bind();
-      decorateReference();
-      const importBox=document.getElementById('referenceImport');
-      if(importBox)importBox.onpaste=()=>setTimeout(importReferenceText,0);
-      if(window.referenceObserver)window.referenceObserver.disconnect();
-      window.referenceObserver=new MutationObserver(()=>decorateReference());
-      const referenceBody=document.querySelector('.cols,[data-edit="writerBody"],#sideWriter');
-      if(referenceBody)window.referenceObserver.observe(referenceBody,{childList:true,subtree:true,characterData:true});
       save();
       updateUndoBtn();
       // 手机端：切 tab 后默认折叠操作台（除非用户刚刚手动展开过）

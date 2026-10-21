@@ -1,0 +1,10 @@
+Font: 匯文明朝體 v1.0 / Huiwen-mincho
+Designer: 特里王 (Terri Wong)
+Original font name table, name ID 0: Public Domain
+Original release: https://zhuanlan.zhihu.com/p/344103391
+Redistributed original binary: https://github.com/cntrump/imitation_typeface_fonts/blob/main/匯文明朝體v1.0.ttf
+The accompanying author statement is preserved verbatim in Huiwen-author-statement.md under the 汇文明朝体 section.
+That section permits printing, display, embedding, redistribution, bundling and derivation; it prohibits selling the font file alone.
+The preceding section in that document concerns 京華老宋体, a different font which is not distributed here.
+The original release page returned HTTP 403 to automated retrieval on 2026-10-21. The font's own name-table copyright declaration and the accompanying statement are the licensing evidence retained for this distribution.
+Only format conversion from TTF to WOFF2 was performed; glyph outlines and names were preserved. The font is not claimed to be SIL OFL or CC0-licensed.
