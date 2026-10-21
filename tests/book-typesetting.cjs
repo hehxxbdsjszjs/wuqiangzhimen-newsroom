@@ -13,7 +13,7 @@ async function create(saved){
  }});
  await new Promise(r=>setTimeout(r,20));return d;
 }
-const fixture=`<p>  正文    第一段，保留<strong>重要观点</strong>。 </p><p><br></p><p>\u3000\u3000第二段。数字 1923–1924，中文标点：《书名》、“引号”、（括号）！？</p><ul><li>列表一<b>粗体</b></li><li>列表二</li></ul><ol start="3"><li>步骤三</li></ol><figure><img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='60'%3E%3Crect width='120' height='60' fill='%23bba577'/%3E%3C/svg%3E" alt="正文图片"><figcaption>图片说明</figcaption></figure><blockquote><p>引用内容</p></blockquote><hr><p>最后一段。</p>`;
+const fixture=`<p>  正文    第一段，保留<strong>重要观点</strong>。 </p><p><br></p><p>\u3000\u3000第二段。数字 1923–1924，中文标点：《书名》、“引号”、（括号）！？</p><ul><li>列表一<b>粗体</b></li><li>列表二</li></ul><ol start="3"><li>步骤三</li></ol><figure><img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='60'%3E%3Crect width='120' height='60' fill='%23bba577'/%3E%3C/svg%3E" alt="正文图片"><figcaption>图片说明</figcaption></figure><blockquote><p>引用内容</p></blockquote><hr><p><strong>一你没能抵达想要的人生</strong></p><p>最后一段。</p>`;
 function signature(body){return ['strong','b','ul','ol','li','figure','img','figcaption','blockquote','hr'].map(s=>[s,body.querySelectorAll(s).length]);}
 (async()=>{
  const dom=await create(),w=dom.window,d=w.document;const run=x=>w.eval(x),results=[];
@@ -35,6 +35,7 @@ function signature(body){return ['strong','b','ul','ol','li','figure','img','fig
    assert.equal(w.BookTypesetting.setting().bodyFont,font);
    const formatted=d.querySelector('.cols,#sideWriter,[data-edit="writerBody"]');assert.deepEqual(signature(formatted),sig);assert.equal(formatted.textContent.replace(/\s/g,''),text);
    assert(!formatted.querySelector('p').textContent.includes('    '));
+   assert(formatted.querySelector('p.reference-heading strong'));
    run('undo();isApplyingHistory=false');assert.equal(w.BookTypesetting.setting().bodyFont,font);
    assert.deepEqual(signature(d.querySelector('.cols,#sideWriter,[data-edit="writerBody"]')),sig);
   }
@@ -48,6 +49,17 @@ function signature(body){return ['strong','b','ul','ol','li','figure','img','fig
    const textarea=d.querySelector(`textarea[data-k="${key}"]`);textarea.value='甲段乙段';textarea.dispatchEvent(new w.Event('input',{bubbles:true}));run('render()');
    assert.equal(d.querySelector('.cols,[data-edit="writerBody"]').querySelectorAll('p').length,1);
   }
+  w.BookTypesetting.selectWeight('body',700);
+  assert.equal(w.BookTypesetting.setting().bodyWeight,700);
+  w.BookTypesetting.selectWeight('title',600);
+  assert.equal(w.BookTypesetting.setting().titleWeight,600);
+  w.BookTypesetting.formatCurrent();
+  assert.equal(w.BookTypesetting.setting().bodyWeight,700);
+  assert.equal(w.BookTypesetting.setting().titleWeight,600);
+  assert.equal(d.querySelector('article').style.getPropertyValue('--body-weight'),'700');
+  w.BookTypesetting.selectWeight('body',200);
+  run('undo()');
+  assert.equal(w.BookTypesetting.setting().bodyWeight,700);
   results.push({section:tab,twoFontSwitches:'PASS',formatRetainsSelectedFont:'PASS',richStructure:'PASS',undo:'PASS',independentTitleFont:'PASS'});
  }
  assert.equal(run('state.bodySize'),original.bodySize);assert.equal(run('state.paper'),original.paper);assert.equal(run('state.cols'),original.cols);assert.equal(run('state.image'),original.image);
@@ -55,7 +67,7 @@ function signature(body){return ['strong','b','ul','ol','li','figure','img','fig
  const restored=await create(saved);
  for(const tab of ['news','side','write']){
   restored.window.eval(`state.tab='${tab}';render()`);
-  assert.equal(restored.window.BookTypesetting.setting().bodyFont,'song');assert.equal(restored.window.BookTypesetting.setting().titleFont,'engraved');
+  assert.equal(restored.window.BookTypesetting.setting().bodyWeight,700);assert.equal(restored.window.BookTypesetting.setting().titleWeight,600);assert.equal(restored.window.BookTypesetting.setting().bodyFont,'song');assert.equal(restored.window.BookTypesetting.setting().titleFont,'engraved');
  }
  restored.window.close();
  assert(!w.BookTypesetting.safeHTML('<p onclick="bad()">正文</p><script>bad()</script><img src="javascript:bad()">').includes('bad'));
@@ -69,7 +81,7 @@ function signature(body){return ['strong','b','ul','ol','li','figure','img','fig
  w.BookTypesetting.capture(true);run('save()');
  await w.BookTypesetting.downloadReading();
  const page=await new Promise((resolve,reject)=>{const r=new w.FileReader();r.onload=()=>resolve(r.result);r.onerror=reject;r.readAsText(exported)});
- assert(downloadName.endsWith('.html'));assert(page.includes('data-book-typesetting="v21"'));assert(page.includes('https://hehxxbdsjszjs.github.io/wuqiangzhimen-newsroom/fonts/engraved-huiwen.woff2'));
+ assert(downloadName.endsWith('.html'));assert(page.includes('data-book-typesetting="v22"'));assert(page.includes('https://hehxxbdsjszjs.github.io/wuqiangzhimen-newsroom/fonts/engraved-huiwen.woff2'));
  assert(page.includes('BookEngraved'));assert(page.includes('BookSong'));
  assert(page.includes('<strong>'));assert(page.includes('<ul>'));assert(page.includes('正文图片'));
  const readingDOM=new JSDOM(page);assert(!readingDOM.window.document.querySelector('[contenteditable]'));assert(!readingDOM.window.document.querySelector('script'));readingDOM.window.close();

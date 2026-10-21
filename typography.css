@@ -27,3 +27,8 @@
 @media print{.reference-card{box-shadow:none!important;margin:0 auto!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}}
 .custom-title-font h1 *{font-family:var(--heading-font)!important}
 .custom-body-font .cols *,.custom-body-font [data-edit="writerBody"],.custom-body-font [data-edit="writerBody"] *,.custom-body-font .sp-writer *{font-family:var(--reading-font)!important}
+
+/* Real variable Song weights; single-master Huiwen uses explicitly labelled ink expansion. */
+.custom-title-font h1,.custom-title-font .sp-title-edit,.reference-card h1,.reference-card .sp-title-edit{font-weight:var(--title-weight,400)!important;-webkit-text-stroke:var(--title-stroke,0px) currentColor;font-synthesis:none}
+.custom-body-font .cols,.custom-body-font .cols p,.custom-body-font [data-edit="writerBody"],.custom-body-font [data-edit="writerBody"] p,.custom-body-font .sp-writer,.custom-body-font .sp-writer p,.reference-card .cols,.reference-card .cols p,.reference-card [data-edit="writerBody"],.reference-card [data-edit="writerBody"] p,.reference-card .sp-writer,.reference-card .sp-writer p{font-weight:var(--body-weight,400);-webkit-text-stroke:var(--body-stroke,0px) currentColor;font-synthesis:none}
+.custom-body-font strong,.custom-body-font b,.reference-card strong,.reference-card b,.reference-card p.reference-heading,.reference-card h2,.reference-card h3{font-weight:var(--body-bold-weight,700)!important;-webkit-text-stroke:var(--body-bold-stroke,0px) currentColor}
