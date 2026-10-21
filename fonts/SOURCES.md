@@ -34,3 +34,8 @@
 - 使用FreeType轮廓处理接口，算法资料：https://freetype.org/freetype2/docs/reference/ft2-outline_processing.html 。构建脚本为 `tools/build-engraved.py`，构建依赖仅在临时环境安装，不增加网站运行时依赖。
 - 简体显示映射来自OpenCC的TSCharacters字表（opencc-python-reimplemented 0.1.7所附版本），来源 https://github.com/BYVoid/OpenCC ，Apache 2.0原件保留于 `OpenCC-Apache-2.0.txt`。将已收录的繁体编码直接映射到相应简体轮廓，不改写文章原文、图片或段落。
 - 映射覆盖数量及具体条目见 `engraved-sc-audit.json`。简体/繁体同组映射进行全表一致性校验。字库仍保留古籍旧印刷笔形（如笔锋、边缘磨损），不把旧笔形与繁体编码混为一谈。
+
+
+## v25: mobile font delivery
+
+The original two typefaces and the generated engraved weight axis are unchanged. Web resources now use frequency-grouped unicode-range subsets in `mobile-fonts.css` and `fonts/mobile/`. No Google CDN is contacted by the website. The partition reference is the official Google Fonts Noto Serif SC stylesheet, retained in `tools/noto-subset-ranges.css`; generator: `tools/build-mobile-fonts.py`. Existing licenses remain applicable. Font loading uses the actual title/body characters; the reader reports loading or failure instead of silently displaying the system fallback. Existing legacy font files remain available for old saved reading pages.

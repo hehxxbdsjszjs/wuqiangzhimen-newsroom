@@ -82,7 +82,7 @@ function signature(body){return ['strong','b','ul','ol','li','figure','img','fig
  assert(!w.BookTypesetting.safeHTML('<p onclick="bad()">正文</p><script>bad()</script><img src="javascript:bad()">').includes('bad'));
  // A saved reading page retains its own content and font choices, with no editable scripts.
  let exported,downloadName;
- w.fetch=async()=>({ok:true,text:async()=>fs.readFileSync(path.join(root,'typography.css'),'utf8')});
+ w.fetch=async url=>({ok:true,text:async()=>fs.readFileSync(path.join(root,new URL(url).pathname.split('/').pop()),'utf8')});
  w.URL.createObjectURL=blob=>{exported=blob;return 'blob:test-reading'};
  w.URL.revokeObjectURL=()=>{};
  w.HTMLAnchorElement.prototype.click=function(){downloadName=this.download};
@@ -90,10 +90,18 @@ function signature(body){return ['strong','b','ul','ol','li','figure','img','fig
  w.BookTypesetting.capture(true);run('save()');
  await w.BookTypesetting.downloadReading();
  const page=await new Promise((resolve,reject)=>{const r=new w.FileReader();r.onload=()=>resolve(r.result);r.onerror=reject;r.readAsText(exported)});
- assert(downloadName.endsWith('.html'));assert(page.includes('data-book-typesetting="v24"'));assert(page.includes('https://hehxxbdsjszjs.github.io/wuqiangzhimen-newsroom/fonts/engraved-sc-0.woff2'));
+ assert(downloadName.endsWith('.html'));assert(page.includes('data-book-typesetting="v25"'));assert(page.includes('https://hehxxbdsjszjs.github.io/wuqiangzhimen-newsroom/fonts/mobile/engraved-0.woff2'));
  assert(page.includes('BookEngraved'));assert(page.includes('BookSong'));
  assert(page.includes('<strong>'));assert(page.includes('<ul>'));assert(page.includes('正文图片'));
  const readingDOM=new JSDOM(page);assert(!readingDOM.window.document.querySelector('[contenteditable]'));assert(!readingDOM.window.document.querySelector('script'));readingDOM.window.close();
+ const originalLoad=w.document.fonts.load;
+ w.document.fonts.load=async()=>{throw Error('模拟网络失败')};run('render()');
+ await new Promise(resolve=>setTimeout(resolve,0));
+ assert(d.querySelector('.book-load-status').textContent.includes('系统字体'));
+ assert(d.querySelector('.book-load-status button'));
+ w.document.fonts.load=originalLoad;run('render()');
+ await new Promise(resolve=>setTimeout(resolve,0));
+ assert(d.querySelector('.book-load-status').hidden);
  assert.deepEqual(logs,[]);
  console.log(JSON.stringify({results,localSaveReopen:'PASS',existingSettings:'PASS',safeRichHTML:'PASS',savedReadingPage:'PASS',errors:logs},null,2));
  }finally{dom.window.close()}

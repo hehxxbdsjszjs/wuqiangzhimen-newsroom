@@ -1,8 +1,3 @@
-@font-face{font-family:BookEngraved;src:url('fonts/engraved-sc-0.woff2') format('woff2');font-weight:200 900;font-style:normal;font-display:swap;unicode-range:U+0000-5FFF}
-@font-face{font-family:BookEngraved;src:url('fonts/engraved-sc-1a.woff2') format('woff2');font-weight:200 900;font-style:normal;font-display:swap;unicode-range:U+6000-77FF}
-@font-face{font-family:BookEngraved;src:url('fonts/engraved-sc-1b.woff2') format('woff2');font-weight:200 900;font-style:normal;font-display:swap;unicode-range:U+7800-8FFF}
-@font-face{font-family:BookEngraved;src:url('fonts/engraved-sc-2.woff2') format('woff2');font-weight:200 900;font-style:normal;font-display:swap;unicode-range:U+9000-10FFFF}
-@font-face{font-family:BookSong;src:url('fonts/body.woff2') format('woff2');font-weight:200 900;font-style:normal;font-display:swap}
 .book-format-button{background:#c5a765;color:#181917!important;font-weight:700;font-size:15px!important;min-height:44px}
 .book-details{color:#c0baae;font-size:12px;line-height:1.6}.book-details summary{cursor:pointer;min-height:36px}.book-details[open]{display:grid;gap:12px}.reference-import{height:120px!important}
 .custom-title-font h1,.custom-title-font .sp-title-edit{font-family:var(--heading-font)!important}
@@ -45,3 +40,5 @@
 :is(.custom-body-font,.reference-card) :is(.cols,[data-edit="writerBody"],.sp-writer) :is(strong,b,.book-inline-emphasis,.reference-heading,h2,h3) *{font-weight:var(--body-bold-weight,700)!important;font-variation-settings:"wght" var(--body-bold-weight,700)!important}
 :is(.custom-title-font,.reference-card) :is(h1,.sp-title-edit),
 :is(.custom-title-font,.reference-card) :is(h1,.sp-title-edit) *{font-weight:var(--title-weight,400)!important;font-variation-settings:"wght" var(--title-weight,400)!important}
+
+.book-load-status{font:13px/1.5 system-ui,sans-serif!important;letter-spacing:normal!important;text-indent:0!important;padding:10px 12px;margin:0 0 14px;background:#eee4cf;color:#443a27;border:1px solid #cbbf9f}.book-load-status[hidden]{display:none!important}.book-load-status button{margin-left:8px;padding:5px 8px;font:inherit}

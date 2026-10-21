@@ -103,7 +103,14 @@ window.BookTypesetting = (() => {
   async function loadedFont(key) {
     if(!document.fonts)throw Error('浏览器不支持网页字体，请更新浏览器');
     const f=fonts[key]||fonts.song;
-    const loaded=await document.fonts.load(`400 24px ${f.family}`,'第一个进入拉萨的欧洲女性，。！？门阅读');
+    const a=active(),s=setting(),chosen=(state.typography||{})[state.tab]||{};let text='无墙之门。';
+    if(a){
+      const chunks=[];
+      if(key===s.bodyFont&&(chosen.bodyFont||s.layout==='book'))chunks.push(a.body.textContent);
+      if(key===s.titleFont&&(chosen.titleFont||s.layout==='book'))chunks.push(a.card.querySelector('h1')?.textContent||'');
+      if(chunks.length)text=Array.from(new Set(Array.from(chunks.join('')+'0123456789字分钟，。'))).join('');
+    }
+    const loaded=await document.fonts.load(`400 24px ${f.family}`,text);
     if(!loaded.length||loaded.some(face=>face.status!=='loaded'))throw Error(`${f.actual} 加载失败，请检查网络后重试`);
     return f;
   }
@@ -113,12 +120,26 @@ window.BookTypesetting = (() => {
     if(!chosen && setting().layout==='original')return;
     const status=document.getElementById('bookFontStatus'),tab=a.tab;
     if(status)status.textContent='正在加载字体…';
+    let notice=a.card.querySelector('.book-load-status');
+    if(!notice){notice=document.createElement('div');notice.className='book-load-status';notice.setAttribute('role','status');a.card.prepend(notice);}
+    notice.hidden=false;notice.textContent='字体加载中，完成后自动应用…';
     try {
       const s=setting();
-      await Promise.all([loadedFont(s.bodyFont),loadedFont(s.titleFont)]);
+      const bodyActive=s.layout==='book'||!!chosen.bodyFont,titleActive=s.layout==='book'||!!chosen.titleFont;
+      const keys=new Set([...(bodyActive?[s.bodyFont]:[]),...(titleActive?[s.titleFont]:[])]);
+      await Promise.all(Array.from(keys,key=>loadedFont(key)));
       if(state.tab!==tab)return;
-      if(status)status.textContent=`正文：${fonts[s.bodyFont].actual} · 标题：${fonts[s.titleFont].actual} · 已加载`;
-    }catch(error){if(status&&state.tab===tab)status.textContent=error.message;}
+      if(status)status.textContent=`正文：${bodyActive?fonts[s.bodyFont].actual:'原有字体'} · 标题：${titleActive?fonts[s.titleFont].actual:'原有字体'} · 已加载`;
+      notice.hidden=true;
+    }catch(error){if(state.tab===tab){
+      if(status)status.textContent=error.message;
+      notice.textContent='字体加载失败，当前显示系统字体。';
+      const retry=document.createElement('button');retry.type='button';retry.textContent='重新加载字体';retry.onclick=retryFonts;notice.append(retry);
+    }}
+  }
+  async function retryFonts(){
+    capture(true);await saveNow();const url=new URL(location.href);url.searchParams.set('fontReload',Date.now());location.replace(url.href);
+
   }
   function selectFont(value) {
     if(!fonts[value])return;
@@ -171,20 +192,23 @@ window.BookTypesetting = (() => {
     try { await Promise.all([loadedFont(s.bodyFont),loadedFont(s.titleFont)]); }
     catch(error){showToast(error.message);return;}
     const clone=a.card.cloneNode(true);
-    clone.querySelectorAll('.hero.empty,.hero-del,input[type="file"]').forEach(el=>el.remove());
+    clone.querySelectorAll('.hero.empty,.hero-del,.book-load-status,input[type="file"]').forEach(el=>el.remove());
     clone.querySelectorAll('[contenteditable]').forEach(el=>el.removeAttribute('contenteditable'));
     clone.querySelectorAll('img').forEach(img=>{if(img.getAttribute('src'))img.src=new URL(img.getAttribute('src'),location.href).href;});
     const base='https://hehxxbdsjszjs.github.io/wuqiangzhimen-newsroom/';
     let bookCSS;
     try {
-      const response=await fetch(new URL('typography.css',location.href));
-      if(!response.ok)throw Error('排版样式读取失败');
-      bookCSS=(await response.text()).replace(/url\((['"]?)(fonts\/[^)'"]+)\1\)/g,(_,q,file)=>'url("'+base+file+'")');
+      const chunks=await Promise.all(['mobile-fonts.css','typography.css'].map(async file=>{
+        const response=await fetch(new URL(file,location.href));
+        if(!response.ok)throw Error('排版样式读取失败');
+        return response.text();
+      }));
+      bookCSS=chunks.join('\n').replace(/url\((['"]?)(fonts\/[^)'"]+)\1\)/g,(_,q,file)=>'url("'+base+file+'")');
     }catch(error){showToast('阅读页保存失败：'+error.message);return;}
     const legacy=Array.from(document.querySelectorAll('head style')).map(el=>el.textContent).join('\n');
     const title=a.card.querySelector('h1').textContent;
     const escaped=title.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-    const page='<!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>'+escaped+'</title><style>'+legacy+'</style><style data-book-typesetting="v24">'+bookCSS+'</style><style>:root{'+document.documentElement.style.cssText+'}body{margin:0}.edit{border-color:transparent!important;background:transparent!important;box-shadow:none!important}article{margin-inline:auto!important}</style><body>'+safeHTML(clone.outerHTML)+'</body></html>';
+    const page='<!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>'+escaped+'</title><style>'+legacy+'</style><style data-book-typesetting="v25">'+bookCSS+'</style><style>:root{'+document.documentElement.style.cssText+'}body{margin:0}.edit{border-color:transparent!important;background:transparent!important;box-shadow:none!important}article{margin-inline:auto!important}</style><body>'+safeHTML(clone.outerHTML)+'</body></html>';
     const url=URL.createObjectURL(new Blob([page],{type:'text/html;charset=utf-8'}));
     const link=document.createElement('a');link.href=url;link.download=(title.replace(/[\\/:*?"<>|]/g,'').slice(0,60)||'无墙之门')+'.html';link.click();
     setTimeout(()=>URL.revokeObjectURL(url),10000);showToast('阅读页已保存，字体选择与内容保留');
