@@ -3,6 +3,13 @@ const fs=require('fs'),assert=require('node:assert/strict'),path=require('path')
 const root=path.resolve(__dirname,'..');
 const moduleSource=fs.readFileSync(path.join(root,'typography.js'),'utf8');
 let html=fs.readFileSync(path.join(root,'index.html'),'utf8').replace(/<script src="typography.js[^>]*><\/script>/,`<script>${moduleSource.replace(/\$/g,'$$$$')}</script>`);
+// A new page badge must never keep old typography resource URLs.
+const appVersion=html.match(/app-version" content="v(\d+)/)[1];
+for(const file of ['mobile-fonts.css','typography.css','typography.js'])assert(fs.readFileSync(path.join(root,'index.html'),'utf8').includes(file+'?v='+appVersion));
+const fontCSS=fs.readFileSync(path.join(root,'mobile-fonts.css'),'utf8');
+const fontURLs=[...fontCSS.matchAll(/url\("(fonts\/mobile\/[^"?]+)\?sha=([a-f0-9]+)"\)/g)];
+assert.equal(fontURLs.length,86);
+for(const [,file,hash] of fontURLs)assert(require('crypto').createHash('sha256').update(fs.readFileSync(path.join(root,file))).digest('hex').startsWith(hash));
 const logs=[];
 async function create(saved){
  const vc=new VirtualConsole();vc.on('jsdomError',e=>{if(!/not implemented/i.test(e.message))logs.push(e.message)});
@@ -111,7 +118,7 @@ function signature(body){return ['strong','b','ul','ol','li','figure','img','fig
  w.BookTypesetting.capture(true);run('save()');
  await w.BookTypesetting.downloadReading();
  const page=await new Promise((resolve,reject)=>{const r=new w.FileReader();r.onload=()=>resolve(r.result);r.onerror=reject;r.readAsText(exported)});
- assert(downloadName.endsWith('.html'));assert(page.includes('data-book-typesetting="v27"'));assert(page.includes('https://hehxxbdsjszjs.github.io/wuqiangzhimen-newsroom/fonts/mobile/engraved-0.woff2'));
+ assert(downloadName.endsWith('.html'));assert(page.includes('data-book-typesetting="v28"'));assert(page.includes('https://hehxxbdsjszjs.github.io/wuqiangzhimen-newsroom/fonts/mobile/engraved-0.woff2'));
  assert(page.includes('BookEngraved'));assert(page.includes('BookSong'));
  assert(page.includes('<strong>'));assert(page.includes('<ul>'));assert(page.includes('正文图片'));
  const readingDOM=new JSDOM(page);assert(!readingDOM.window.document.querySelector('[contenteditable]'));assert(!readingDOM.window.document.querySelector('script'));readingDOM.window.close();

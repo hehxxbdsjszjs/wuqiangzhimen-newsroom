@@ -7,8 +7,8 @@ window.BookTypesetting = (() => {
     side: {card:'#sideproject-card', body:'#sideWriter', text:'sideArticle', title:'sideSection'}
   };
   const fonts = {
-    engraved:{family:'BookEngraved',name:'古籍雕版字体',actual:'汇文明朝体·简体可调版'},
-    song:{family:'BookSong',name:'传统书籍宋体',actual:'Noto Serif SC'}
+    engraved:{family:'BookEngraved28',name:'古籍雕版字体',actual:'汇文明朝体·简体可调版'},
+    song:{family:'BookSong28',name:'传统书籍宋体',actual:'Noto Serif SC'}
   };
   let observer, mounting=false, restoring=false;
   const normalized = text => String(text||'').replace(/\r\n?/g,'\n').replace(/\n{3,}/g,'\n\n').trim();
@@ -228,7 +228,7 @@ window.BookTypesetting = (() => {
     const legacy=Array.from(document.querySelectorAll('head style')).map(el=>el.textContent).join('\n');
     const title=a.card.querySelector('h1').textContent;
     const escaped=title.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-    const page='<!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>'+escaped+'</title><style>'+legacy+'</style><style data-book-typesetting="v27">'+bookCSS+'</style><style>:root{'+document.documentElement.style.cssText+'}body{margin:0}.edit{border-color:transparent!important;background:transparent!important;box-shadow:none!important}article{margin-inline:auto!important}</style><body>'+safeHTML(clone.outerHTML)+'</body></html>';
+    const page='<!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>'+escaped+'</title><style>'+legacy+'</style><style data-book-typesetting="v28">'+bookCSS+'</style><style>:root{'+document.documentElement.style.cssText+'}body{margin:0}.edit{border-color:transparent!important;background:transparent!important;box-shadow:none!important}article{margin-inline:auto!important}</style><body>'+safeHTML(clone.outerHTML)+'</body></html>';
     const url=URL.createObjectURL(new Blob([page],{type:'text/html;charset=utf-8'}));
     const link=document.createElement('a');link.href=url;link.download=(title.replace(/[\\/:*?"<>|]/g,'').slice(0,60)||'无墙之门')+'.html';link.click();
     setTimeout(()=>URL.revokeObjectURL(url),10000);showToast('阅读页已保存，字体选择与内容保留');
@@ -240,8 +240,8 @@ window.BookTypesetting = (() => {
     a.card.classList.toggle('custom-body-font',!!chosen.bodyFont);
     a.card.classList.toggle('reference-card',s.layout==='book');
     a.card.dataset.layout=s.layout;
-    a.card.style.setProperty('--reading-font',`${fonts[s.bodyFont].family}, BookSong, serif`);
-    a.card.style.setProperty('--heading-font',`${fonts[s.titleFont].family}, BookSong, serif`);
+    a.card.style.setProperty('--reading-font',`${fonts[s.bodyFont].family}, BookSong28, serif`);
+    a.card.style.setProperty('--heading-font',`${fonts[s.titleFont].family}, BookSong28, serif`);
     a.card.style.setProperty('--book-size',`${Number(s.bodySize)||28}px`);
     for(const scope of ['body','title']){
       const weight=Number(s[scope+'Weight'])||400;
@@ -255,13 +255,13 @@ window.BookTypesetting = (() => {
     if(chosen.bodyFont||s.layout==='book')a.body.querySelectorAll('[style],.book-inline-emphasis').forEach(el=>{
       const value=el.style.fontWeight;
       el.classList.toggle('book-inline-emphasis',/^(bold|bolder)$/i.test(value)||Number(value)>=600);
-      ['font-weight','font-family','font-variation-settings'].forEach(prop=>{
+      ['font-weight','font-family','font-variation-settings',...(s.layout==='book'?['color','-webkit-text-fill-color','opacity']:[])].forEach(prop=>{
         const current=el.style.getPropertyValue(prop);
         if(current&&el.style.getPropertyPriority(prop))el.style.setProperty(prop,current);
       });
     });
     if(chosen.titleFont||s.layout==='book')a.card.querySelectorAll('h1[style],h1 [style],.sp-title-edit[style],.sp-title-edit [style]').forEach(el=>{
-      ['font-family','font-weight','font-variation-settings'].forEach(prop=>{
+      ['font-family','font-weight','font-variation-settings',...(s.layout==='book'?['color','-webkit-text-fill-color','opacity','height','max-height','overflow','white-space']:[])].forEach(prop=>{
         const value=el.style.getPropertyValue(prop);
         if(value&&el.style.getPropertyPriority(prop))el.style.setProperty(prop,value);
       });
@@ -270,6 +270,10 @@ window.BookTypesetting = (() => {
     if(title){
       title.classList.toggle('book-positioned-title',s.layout==='book'||s.titleAlign!==undefined||s.titleBefore!==undefined||s.titleAfter!==undefined||s.titleInset!==undefined);
       a.card.style.setProperty('--title-align',s.titleAlign||'left');
+      const titleLength=Array.from(title.textContent.replace(/\s/g,'')).length;
+      // Keep short Chinese titles together at phone widths; longer titles retain natural wrapping.
+      const units=Math.max(8,Math.min(12,titleLength));
+      a.card.style.setProperty('--mobile-title-size',`clamp(22px,calc((100vw - 84px) / ${units}),40px)`);
       a.card.style.setProperty('--title-before',(s.titleBefore??26)+'px');
       a.card.style.setProperty('--title-after',(s.titleAfter??24)+'px');
       a.card.style.setProperty('--title-inset',(s.titleInset||0)+'%');
