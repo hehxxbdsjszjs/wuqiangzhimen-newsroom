@@ -184,7 +184,7 @@ window.BookTypesetting = (() => {
     const legacy=Array.from(document.querySelectorAll('head style')).map(el=>el.textContent).join('\n');
     const title=a.card.querySelector('h1').textContent;
     const escaped=title.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-    const page='<!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>'+escaped+'</title><style>'+legacy+'</style><style data-book-typesetting="v23">'+bookCSS+'</style><style>:root{'+document.documentElement.style.cssText+'}body{margin:0}.edit{border-color:transparent!important;background:transparent!important;box-shadow:none!important}article{margin-inline:auto!important}</style><body>'+safeHTML(clone.outerHTML)+'</body></html>';
+    const page='<!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>'+escaped+'</title><style>'+legacy+'</style><style data-book-typesetting="v24">'+bookCSS+'</style><style>:root{'+document.documentElement.style.cssText+'}body{margin:0}.edit{border-color:transparent!important;background:transparent!important;box-shadow:none!important}article{margin-inline:auto!important}</style><body>'+safeHTML(clone.outerHTML)+'</body></html>';
     const url=URL.createObjectURL(new Blob([page],{type:'text/html;charset=utf-8'}));
     const link=document.createElement('a');link.href=url;link.download=(title.replace(/[\\/:*?"<>|]/g,'').slice(0,60)||'无墙之门')+'.html';link.click();
     setTimeout(()=>URL.revokeObjectURL(url),10000);showToast('阅读页已保存，字体选择与内容保留');
@@ -206,6 +206,13 @@ window.BookTypesetting = (() => {
       a.card.style.setProperty('--'+scope+'-bold-weight',Math.min(900,weight+300));
       a.card.style.setProperty('--'+scope+'-bold-stroke','0px');
     }
+    // Clipboard HTML often pins each paragraph/span to font-weight:400.
+    // Preserve its emphasis while allowing the selected reading weight to win.
+    if(chosen.bodyFont||s.layout==='book')a.body.querySelectorAll('[style],.book-inline-emphasis').forEach(el=>{
+      const value=el.style.fontWeight;
+      el.classList.toggle('book-inline-emphasis',/^(bold|bolder)$/i.test(value)||Number(value)>=600);
+      if(value&&el.style.getPropertyPriority('font-weight'))el.style.setProperty('font-weight',value);
+    });
     if(s.layout!=='book')return;
     a.body.querySelectorAll('p').forEach(p=>{
       const t=p.textContent.trim();

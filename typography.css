@@ -37,3 +37,11 @@
 .custom-body-font strong,.custom-body-font b,.reference-card strong,.reference-card b,.reference-card p.reference-heading,.reference-card h2,.reference-card h3{font-weight:var(--body-bold-weight,700)!important;-webkit-text-stroke:var(--body-bold-stroke,0px) currentColor}
 
 .custom-title-font,.custom-body-font,.reference-card{font-variant-east-asian:simplified}
+
+/* Pasted inline weights must not override the reading control, including on WebKit. */
+:is(.custom-body-font,.reference-card) :is(.cols,[data-edit="writerBody"],.sp-writer),
+:is(.custom-body-font,.reference-card) :is(.cols,[data-edit="writerBody"],.sp-writer) :where(*){font-weight:var(--body-weight,400)!important;font-variation-settings:"wght" var(--body-weight,400)!important}
+:is(.custom-body-font,.reference-card) :is(.cols,[data-edit="writerBody"],.sp-writer) :is(strong,b,.book-inline-emphasis,.reference-heading,h2,h3),
+:is(.custom-body-font,.reference-card) :is(.cols,[data-edit="writerBody"],.sp-writer) :is(strong,b,.book-inline-emphasis,.reference-heading,h2,h3) *{font-weight:var(--body-bold-weight,700)!important;font-variation-settings:"wght" var(--body-bold-weight,700)!important}
+:is(.custom-title-font,.reference-card) :is(h1,.sp-title-edit),
+:is(.custom-title-font,.reference-card) :is(h1,.sp-title-edit) *{font-weight:var(--title-weight,400)!important;font-variation-settings:"wght" var(--title-weight,400)!important}

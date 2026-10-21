@@ -49,6 +49,11 @@ function signature(body){return ['strong','b','ul','ol','li','figure','img','fig
    const textarea=d.querySelector(`textarea[data-k="${key}"]`);textarea.value='甲段乙段';textarea.dispatchEvent(new w.Event('input',{bubbles:true}));run('render()');
    assert.equal(d.querySelector('.cols,[data-edit="writerBody"]').querySelectorAll('p').length,1);
   }
+  const weightedBody=d.querySelector('.cols,[data-edit="writerBody"],#sideWriter');
+  weightedBody.insertAdjacentHTML('beforeend','<p style="font-weight:400!important">粘贴的常规正文<span style="font-weight:700">保留加粗</span></p>');
+  w.BookTypesetting.decorate();
+  assert(weightedBody.querySelector('.book-inline-emphasis'));
+  assert.equal(weightedBody.lastElementChild.style.getPropertyPriority('font-weight'),'');
   w.BookTypesetting.selectWeight('title',200);
   assert.equal(w.BookTypesetting.setting().titleWeight,200);
   w.BookTypesetting.selectWeight('title',300);
@@ -85,7 +90,7 @@ function signature(body){return ['strong','b','ul','ol','li','figure','img','fig
  w.BookTypesetting.capture(true);run('save()');
  await w.BookTypesetting.downloadReading();
  const page=await new Promise((resolve,reject)=>{const r=new w.FileReader();r.onload=()=>resolve(r.result);r.onerror=reject;r.readAsText(exported)});
- assert(downloadName.endsWith('.html'));assert(page.includes('data-book-typesetting="v23"'));assert(page.includes('https://hehxxbdsjszjs.github.io/wuqiangzhimen-newsroom/fonts/engraved-sc-0.woff2'));
+ assert(downloadName.endsWith('.html'));assert(page.includes('data-book-typesetting="v24"'));assert(page.includes('https://hehxxbdsjszjs.github.io/wuqiangzhimen-newsroom/fonts/engraved-sc-0.woff2'));
  assert(page.includes('BookEngraved'));assert(page.includes('BookSong'));
  assert(page.includes('<strong>'));assert(page.includes('<ul>'));assert(page.includes('正文图片'));
  const readingDOM=new JSDOM(page);assert(!readingDOM.window.document.querySelector('[contenteditable]'));assert(!readingDOM.window.document.querySelector('script'));readingDOM.window.close();
