@@ -89,12 +89,11 @@ window.BookTypesetting = (() => {
       <button class="panel-btn dark" onclick="BookTypesetting.downloadReading()">保存阅读页</button>
       <p class="note" id="bookFontStatus" aria-live="polite">${chosen?'字体将在编辑区域加载':'未选择时，保留原有字体与设置。'}</p>
       <details class="book-details" open><summary>标题位置与文字编辑</summary>
-        <label class="label">标题字号（像素，留空为自动）<input id="bookTitleSize" type="number" inputmode="numeric" min="16" max="96" step="1" placeholder="自动" value="${s.titleSize??''}" onfocus="pushHistory()" oninput="BookTypesetting.setTitleSize(this.value)"></label>
-        <button class="panel-btn dark" onclick="BookTypesetting.setTitleSize('');render()">标题字号恢复自动</button>
         <label class="label">标题对齐<select onchange="BookTypesetting.editHeader('titleAlign',this.value)">${[['left','居左'],['center','居中'],['right','居右']].map(([v,t])=>`<option value="${v}" ${(s.titleAlign||'left')===v?'selected':''}>${t}</option>`).join('')}</select></label>
-        <label class="label">标题左侧位置（%）<input type="number" min="0" max="40" value="${s.titleInset||0}" onchange="BookTypesetting.editHeader('titleInset',this.value)"></label>
-        <label class="label">标题上方间距（像素）<input type="number" min="0" max="200" value="${s.titleBefore??26}" onchange="BookTypesetting.editHeader('titleBefore',this.value)"></label>
-        <label class="label">标题下方间距（像素）<input type="number" min="0" max="200" value="${s.titleAfter??24}" onchange="BookTypesetting.editHeader('titleAfter',this.value)"></label>
+        <label class="label">主标题间距<input id="bookTitleSpacing" type="number" inputmode="decimal" min="-2" max="12" step="0.5" value="${s.titleSpacing??0}" onfocus="pushHistory()" oninput="BookTypesetting.setSpacing('title',this.value)"><span class="note">标题字距，单位：像素</span></label>
+        <label class="label">主标题字号<input id="bookTitleSize" type="number" inputmode="numeric" min="16" max="96" step="1" placeholder="自动" value="${s.titleSize??''}" onfocus="pushHistory()" oninput="BookTypesetting.setTitleSize(this.value)"><span class="note">单位：像素；留空为自动</span></label>
+        <label class="label">正文间距<input id="bookBodySpacing" type="number" inputmode="decimal" min="1.2" max="3" step="0.1" value="${s.bodyLineHeight??1.8}" onfocus="pushHistory()" oninput="BookTypesetting.setSpacing('body',this.value)"><span class="note">正文行距，单位：倍</span></label>
+        <button class="panel-btn dark" onclick="pushHistory();BookTypesetting.setTitleSize('');render()">主标题字号恢复自动</button>
         <button class="panel-btn dark" onclick="BookTypesetting.editHeader('deleteTitle')">删除主标题</button>
         <label class="note"><input type="checkbox" ${s.metaVisible?'checked':''} onchange="BookTypesetting.editHeader('metaVisible',this.checked)"> 显示字数与阅读时间（可直接编辑或删除）</label>
       </details>
@@ -106,6 +105,12 @@ window.BookTypesetting = (() => {
         <label class="note"><input id="referenceFirstTitle" type="checkbox" checked> 首个段落作为标题</label>
         <button class="panel-btn dark" onclick="importReferenceText()">应用全文</button>
       </details>`;
+  }
+  function setSpacing(scope,value) {
+    if(!['title','body'].includes(scope)||value===''||!Number.isFinite(Number(value)))return;
+    capture(true);
+    patch(scope==='title'?{titleSpacing:Math.max(-2,Math.min(12,Number(value)))}:{bodyLineHeight:Math.max(1.2,Math.min(3,Number(value)))});
+    decorate();save();
   }
   function setTitleSize(value) {
     if(value!==''&&!Number.isFinite(Number(value)))return;
@@ -236,7 +241,7 @@ window.BookTypesetting = (() => {
     const legacy=Array.from(document.querySelectorAll('head style')).map(el=>el.textContent).join('\n');
     const title=a.card.querySelector('h1').textContent;
     const escaped=title.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-    const page='<!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>'+escaped+'</title><style>'+legacy+'</style><style data-book-typesetting="v29">'+bookCSS+'</style><style>:root{'+document.documentElement.style.cssText+'}body{margin:0}.edit{border-color:transparent!important;background:transparent!important;box-shadow:none!important}article{margin-inline:auto!important}</style><body>'+safeHTML(clone.outerHTML)+'</body></html>';
+    const page='<!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>'+escaped+'</title><style>'+legacy+'</style><style data-book-typesetting="v30">'+bookCSS+'</style><style>:root{'+document.documentElement.style.cssText+'}body{margin:0}.edit{border-color:transparent!important;background:transparent!important;box-shadow:none!important}article{margin-inline:auto!important}</style><body>'+safeHTML(clone.outerHTML)+'</body></html>';
     const url=URL.createObjectURL(new Blob([page],{type:'text/html;charset=utf-8'}));
     const link=document.createElement('a');link.href=url;link.download=(title.replace(/[\\/:*?"<>|]/g,'').slice(0,60)||'无墙之门')+'.html';link.click();
     setTimeout(()=>URL.revokeObjectURL(url),10000);showToast('阅读页已保存，字体选择与内容保留');
@@ -248,6 +253,12 @@ window.BookTypesetting = (() => {
     a.card.classList.toggle('custom-body-font',!!chosen.bodyFont);
     a.card.classList.toggle('reference-card',s.layout==='book');
     a.card.dataset.layout=s.layout;
+    a.card.classList.toggle('custom-title-spacing',s.titleSpacing!=null);
+    a.card.classList.toggle('custom-body-spacing',s.bodyLineHeight!=null);
+    a.card.style.setProperty('--title-spacing',(s.titleSpacing??0)+'px');
+    a.card.style.setProperty('--body-line-height',s.bodyLineHeight??1.8);
+    if(s.titleSpacing!=null)a.card.querySelectorAll('h1[style],h1 [style]').forEach(el=>el.style.removeProperty('letter-spacing'));
+    if(s.bodyLineHeight!=null)[a.body,...a.body.querySelectorAll('[style]')].forEach(el=>el.style.removeProperty('line-height'));
     a.card.style.setProperty('--reading-font',`${fonts[s.bodyFont].family}, BookSong28, serif`);
     a.card.style.setProperty('--heading-font',`${fonts[s.titleFont].family}, BookSong28, serif`);
     a.card.style.setProperty('--book-size',`${Number(s.bodySize)||28}px`);
@@ -320,5 +331,5 @@ window.BookTypesetting = (() => {
   document.addEventListener('focusout',event=>{
     const a=active();if(a&&a.body&&a.body.contains(event.target)){capture(true);save();}
   });
-  return {setTitleSize,editHeader,setting,controls,selectFont,selectTitle,selectWeight,formatCurrent,original,downloadReading,capture,restore,mount,decorate,loadedFont,safeHTML,fonts};
+  return {setSpacing,setTitleSize,editHeader,setting,controls,selectFont,selectTitle,selectWeight,formatCurrent,original,downloadReading,capture,restore,mount,decorate,loadedFont,safeHTML,fonts};
 })();

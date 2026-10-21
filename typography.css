@@ -59,3 +59,9 @@ h1.book-positioned-title{font-size:var(--title-size,clamp(32px,5vw,64px))!import
 .reference-card h1.book-positioned-title{font-size:var(--title-size,clamp(32px,10.9vw,84px))!important}
 .reference-card h1 *{font-size:inherit!important;line-height:inherit!important}
 @media(max-width:600px){.reference-card h1.book-positioned-title{font-size:var(--title-size,var(--mobile-title-size,30px))!important}}
+
+/* Shared spacing controls, independent of font, colour and body size. */
+.custom-title-spacing h1,.custom-title-spacing .sp-title-edit,.custom-title-spacing h1 *{letter-spacing:var(--title-spacing,0px)!important}
+.custom-body-spacing .cols,.custom-body-spacing .cols *,.custom-body-spacing [data-edit="writerBody"],.custom-body-spacing [data-edit="writerBody"] *,.custom-body-spacing .sp-writer,.custom-body-spacing .sp-writer *{line-height:var(--body-line-height,1.8)!important}
+
+article.custom-body-spacing :is(.cols,[data-edit="writerBody"],.sp-writer),article.custom-body-spacing :is(.cols,[data-edit="writerBody"],.sp-writer) *{line-height:var(--body-line-height,1.8)!important}
