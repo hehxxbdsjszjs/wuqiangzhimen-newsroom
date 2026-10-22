@@ -5,7 +5,7 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
-  <meta name="app-version" content="v31-shared-book-typesetting">
+  <meta name="app-version" content="v32-shared-book-typesetting">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="mobile-web-app-capable" content="yes" />
@@ -392,8 +392,8 @@
     .panel::-webkit-scrollbar-thumb,.work::-webkit-scrollbar-thumb,.sp-tabs::-webkit-scrollbar-thumb,.tabs::-webkit-scrollbar-thumb{background:#888;border-radius:3px}
 
   </style>
-  <link rel="stylesheet" href="mobile-fonts.css?v=31">
-  <link rel="stylesheet" href="typography.css?v=31">
+  <link rel="stylesheet" href="mobile-fonts.css?v=32">
+  <link rel="stylesheet" href="typography.css?v=32">
 
 <!-- Service Worker 已彻底移除，避免缓存导致页面跳动/无限刷新 -->
 <script>
@@ -414,7 +414,7 @@ if ('serviceWorker' in navigator) {
   <nav class="nav">
     <span class="mark">N</span>
     <span class="brand">Newsroom Studio</span>
-    <span style="font-size:9px;color:#999;background:#f0f0f0;padding:1px 6px;border-radius:3px;margin-left:4px">v31</span>
+    <span style="font-size:9px;color:#999;background:#f0f0f0;padding:1px 6px;border-radius:3px;margin-left:4px">v32</span>
     <div class="tabs">
       <button data-tab="news" class="on">新闻排版</button>
       <button data-tab="write">写文章</button>
@@ -426,7 +426,7 @@ if ('serviceWorker' in navigator) {
   <div class="toast" id="toast"></div>
 
 
-  <script src="typography.js?v=31"></script>
+  <script src="typography.js?v=32"></script>
   <script>
     /* ============================================================
        无墙之门 · Newsroom Studio — v10 (持久化存储)
@@ -1360,6 +1360,7 @@ if ('serviceWorker' in navigator) {
             </div>
           </div>
           <label class="label">自定义背景颜色<input id="bookBackgroundColor" type="color" value="${state.paper}" onfocus="pushHistory()" oninput="onStyleChange('paper',this.value)" title="自定义背景颜色"></label>
+          <label class="label">文章背景色调<div class="range-row"><input id="bookBackgroundHue" type="range" min="0" max="360" step="1" value="${BookTypesetting.backgroundHue()}" onfocus="BookTypesetting.beginBackgroundHue()" onblur="BookTypesetting.endBackgroundHue()" oninput="BookTypesetting.setBackgroundHue(this.value)"><output id="bookBackgroundHueValue" for="bookBackgroundHue">${BookTypesetting.backgroundHue()}°</output></div><span class="note">以当前背景颜色为基础调整色调</span></label>
           <button class="panel-btn dark" onclick="resetState()">重置全部内容</button>
         </div>
       `;
@@ -1373,6 +1374,10 @@ if ('serviceWorker' in navigator) {
       applyTheme();
       BookTypesetting.decorate();
       save();
+      if(key==='paper'){
+        const hue=document.getElementById('bookBackgroundHue'),output=document.getElementById('bookBackgroundHueValue');
+        if(hue&&document.activeElement!==hue){hue.value=BookTypesetting.backgroundHue();if(output)output.textContent=hue.value+'°';}
+      }
       if (key === 'bodySize') {
         const s = document.getElementById('bodySizeVal');
         if (s) s.textContent = val + 'px';

@@ -94,6 +94,13 @@ function signature(body){return ['strong','b','ul','ol','li','figure','img','fig
   assert(weightedBody.querySelector('.book-inline-emphasis'));
   assert.equal(weightedBody.lastElementChild.style.getPropertyPriority('font-weight'),'');
   assert.equal(weightedBody.lastElementChild.style.getPropertyPriority('font-family'),'');
+  const hueSlider=d.querySelector('#bookBackgroundHue');assert.equal(hueSlider.type,'range');
+  const beforeHue=run('JSON.stringify([state.ink,state.red,state.bodySize,BookTypesetting.setting().bodyWeight,BookTypesetting.setting().titleSize])');
+  hueSlider.value='210';hueSlider.dispatchEvent(new w.Event('input',{bubbles:true}));
+  assert.equal(d.querySelector('#bookBackgroundHue'),hueSlider);
+  assert.equal(d.querySelector('article').style.backgroundColor,'var(--paper)');
+  assert.equal(run('JSON.stringify([state.ink,state.red,state.bodySize,BookTypesetting.setting().bodyWeight,BookTypesetting.setting().titleSize])'),beforeHue);
+  run('render()');assert(Math.abs(Number(d.querySelector('#bookBackgroundHue').value)-210)<5);
   const background=d.querySelector('#bookBackgroundColor');assert(background);
   background.value='#e9f0e4';background.dispatchEvent(new w.Event('input',{bubbles:true}));
   assert.equal(d.documentElement.style.getPropertyValue('--paper'),'#e9f0e4');
@@ -141,7 +148,7 @@ function signature(body){return ['strong','b','ul','ol','li','figure','img','fig
  w.BookTypesetting.capture(true);run('save()');
  await w.BookTypesetting.downloadReading();
  const page=await new Promise((resolve,reject)=>{const r=new w.FileReader();r.onload=()=>resolve(r.result);r.onerror=reject;r.readAsText(exported)});
- assert(downloadName.endsWith('.html'));assert(page.includes('data-book-typesetting="v31"'));assert(page.includes('https://hehxxbdsjszjs.github.io/wuqiangzhimen-newsroom/fonts/mobile/engraved-0.woff2'));
+ assert(downloadName.endsWith('.html'));assert(page.includes('data-book-typesetting="v32"'));assert(page.includes('https://hehxxbdsjszjs.github.io/wuqiangzhimen-newsroom/fonts/mobile/engraved-0.woff2'));
  assert(page.includes('BookEngraved'));assert(page.includes('BookSong'));
  assert(page.includes('<strong>'));assert(page.includes('<ul>'));assert(page.includes('正文图片'));
  const readingDOM=new JSDOM(page);assert(!readingDOM.window.document.querySelector('[contenteditable]'));assert(!readingDOM.window.document.querySelector('script'));readingDOM.window.close();

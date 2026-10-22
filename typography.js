@@ -10,7 +10,7 @@ window.BookTypesetting = (() => {
     engraved:{family:'BookEngraved28',name:'古籍雕版字体',actual:'汇文明朝体·简体可调版'},
     song:{family:'BookSong28',name:'传统书籍宋体',actual:'Noto Serif SC'}
   };
-  let observer, mounting=false, restoring=false;
+  let observer, mounting=false, restoring=false, hueBase=null;
   const normalized = text => String(text||'').replace(/\r\n?/g,'\n').replace(/\n{3,}/g,'\n\n').trim();
   function setting(tab=state.tab) {
     const value=Object.assign({titleFont:'engraved',bodyFont:'song',bodyWeight:400,titleWeight:400,layout:'original'},(state.typography||{})[tab]);
@@ -64,6 +64,29 @@ window.BookTypesetting = (() => {
   }
   function options(value) {
     return Object.entries(fonts).map(([key,font])=>`<option value="${key}" ${value===key?'selected':''}>${font.name}</option>`).join('');
+  }
+  function backgroundHSL(hex=state.paper) {
+    const rgb=(/^#[0-9a-f]{6}$/i.test(hex)?hex:'#f7f3e9').slice(1).match(/../g).map(v=>parseInt(v,16)/255);
+    const [r,g,b]=rgb,max=Math.max(...rgb),min=Math.min(...rgb),d=max-min,l=(max+min)/2;
+    let h=0;if(d)h=(max===r?(g-b)/d+(g<b?6:0):max===g?(b-r)/d+2:(r-g)/d+4)*60;
+    return [h,d?d/(1-Math.abs(2*l-1)):0,l];
+  }
+  function beginBackgroundHue(){hueBase=backgroundHSL();pushHistory();}
+  function endBackgroundHue(){hueBase=null;}
+  function backgroundHue(){return Math.round(backgroundHSL()[0]);}
+  function setBackgroundHue(value) {
+    if(!Number.isFinite(Number(value)))return;
+    const h=Math.max(0,Math.min(360,Number(value)));
+    let [,s,l]=hueBase||backgroundHSL();
+    // Neutral white/grey needs a light tint for a hue slider to have visible effect.
+    if(s<0.01){s=0.12;l=Math.max(0.03,Math.min(0.97,l));}
+    const c=(1-Math.abs(2*l-1))*s,x=c*(1-Math.abs((h/60)%2-1)),m=l-c/2;
+    const rgb=h<60?[c,x,0]:h<120?[x,c,0]:h<180?[0,c,x]:h<240?[0,x,c]:h<300?[x,0,c]:[c,0,x];
+    const hex='#'+rgb.map(v=>Math.round((v+m)*255).toString(16).padStart(2,'0')).join('');
+    state.paperHueAdjusted=true;
+    onStyleChange('paper',hex);
+    const picker=document.getElementById('bookBackgroundColor');if(picker)picker.value=hex;
+    const output=document.getElementById('bookBackgroundHueValue');if(output)output.textContent=h+'°';
   }
   function selectWeight(scope,value,live=false) {
     if(!['body','title'].includes(scope)||!Number.isFinite(Number(value)))return;
@@ -241,7 +264,7 @@ window.BookTypesetting = (() => {
     const legacy=Array.from(document.querySelectorAll('head style')).map(el=>el.textContent).join('\n');
     const title=a.card.querySelector('h1').textContent;
     const escaped=title.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-    const page='<!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>'+escaped+'</title><style>'+legacy+'</style><style data-book-typesetting="v31">'+bookCSS+'</style><style>:root{'+document.documentElement.style.cssText+'}body{margin:0}.edit{border-color:transparent!important;background:transparent!important;box-shadow:none!important}article{margin-inline:auto!important}</style><body>'+safeHTML(clone.outerHTML)+'</body></html>';
+    const page='<!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>'+escaped+'</title><style>'+legacy+'</style><style data-book-typesetting="v32">'+bookCSS+'</style><style>:root{'+document.documentElement.style.cssText+'}body{margin:0}.edit{border-color:transparent!important;background:transparent!important;box-shadow:none!important}article{margin-inline:auto!important}</style><body>'+safeHTML(clone.outerHTML)+'</body></html>';
     const url=URL.createObjectURL(new Blob([page],{type:'text/html;charset=utf-8'}));
     const link=document.createElement('a');link.href=url;link.download=(title.replace(/[\\/:*?"<>|]/g,'').slice(0,60)||'无墙之门')+'.html';link.click();
     setTimeout(()=>URL.revokeObjectURL(url),10000);showToast('阅读页已保存，字体选择与内容保留');
@@ -253,6 +276,7 @@ window.BookTypesetting = (() => {
     a.card.classList.toggle('custom-body-font',!!chosen.bodyFont);
     a.card.classList.toggle('reference-card',s.layout==='book');
     a.card.dataset.layout=s.layout;
+    if(state.paperHueAdjusted)a.card.style.setProperty('background-color','var(--paper)','important');
     a.card.classList.toggle('custom-title-spacing',s.titleSpacing!=null);
     a.card.classList.toggle('custom-body-spacing',s.bodyLineHeight!=null);
     a.card.style.setProperty('--title-spacing',(s.titleSpacing??0)+'px');
@@ -331,5 +355,5 @@ window.BookTypesetting = (() => {
   document.addEventListener('focusout',event=>{
     const a=active();if(a&&a.body&&a.body.contains(event.target)){capture(true);save();}
   });
-  return {setSpacing,setTitleSize,editHeader,setting,controls,selectFont,selectTitle,selectWeight,formatCurrent,original,downloadReading,capture,restore,mount,decorate,loadedFont,safeHTML,fonts};
+  return {beginBackgroundHue,endBackgroundHue,backgroundHue,setBackgroundHue,setSpacing,setTitleSize,editHeader,setting,controls,selectFont,selectTitle,selectWeight,formatCurrent,original,downloadReading,capture,restore,mount,decorate,loadedFont,safeHTML,fonts};
 })();
