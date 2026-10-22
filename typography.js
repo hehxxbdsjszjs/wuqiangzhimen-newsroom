@@ -65,24 +65,24 @@ window.BookTypesetting = (() => {
   function options(value) {
     return Object.entries(fonts).map(([key,font])=>`<option value="${key}" ${value===key?'selected':''}>${font.name}</option>`).join('');
   }
-  function weightOptions(font,value) {
-    const levels=font==='song'?[[200,'纤细'],[400,'常规'],[500,'中等'],[700,'粗体'],[900,'特粗']]:[[200,'细'],[300,'较细'],[400,'原版'],[500,'略粗'],[600,'中粗'],[700,'粗'],[900,'特粗']];
-    const selected=levels.some(([n])=>n===Number(value))?Number(value):400;
-    return levels.map(([n,label])=>`<option value="${n}" ${n===selected?'selected':''}>${label}${font==='song'?' · '+n:''}</option>`).join('');
-  }
-  function selectWeight(scope,value) {
-    if(!['body','title'].includes(scope))return;
+  function selectWeight(scope,value,live=false) {
+    if(!['body','title'].includes(scope)||!Number.isFinite(Number(value)))return;
+    const weight=Math.max(200,Math.min(900,Math.round(Number(value))));
     const font=setting()[scope+'Font'];
-    const allowed=font==='song'?[200,400,500,700,900]:[200,300,400,500,600,700,900];
-    if(!allowed.includes(Number(value)))return;
-    capture(true);pushHistory();
-    patch({[scope+'Weight']:Number(value),[scope+'Font']:font});save();render();
+    capture(true);if(!live)pushHistory();
+    patch({[scope+'Weight']:weight,[scope+'Font']:font});
+    if(live){
+      decorate();
+      const label=document.getElementById(scope==='body'?'bookBodyWeightValue':'bookTitleWeightValue');
+      if(label)label.textContent=weight;
+      save();
+    }else{save();render();}
   }
   function controls() {
     const s=setting(),chosen=(state.typography||{})[state.tab];
     return `<b>字体与一键排版</b>
       <label class="label">字体选择<select id="bookFontSelect" onchange="BookTypesetting.selectFont(this.value)">${!chosen?'<option value="" selected disabled>保持原有字体 · 请选择</option>':''}${options(!chosen?'':s.bodyFont)}</select></label>
-      <label class="label">正文字重／笔画粗细<select id="bookBodyWeight" onchange="BookTypesetting.selectWeight('body',this.value)">${weightOptions(s.bodyFont,s.bodyWeight)}</select></label>
+      <label class="label">正文字重／笔画粗细<div class="range-row"><input id="bookBodyWeight" type="range" min="200" max="900" step="1" value="${s.bodyWeight}" onfocus="pushHistory()" oninput="BookTypesetting.selectWeight('body',this.value,true)"><output id="bookBodyWeightValue" for="bookBodyWeight">${s.bodyWeight}</output></div></label>
       <p class="note">${s.bodyFont==='song'?'宋体使用字库自带的真实字重。':'古籍字体支持收细和加粗；使用简体字形，原版为400。'}</p>
       <button class="panel-btn book-format-button" onclick="BookTypesetting.formatCurrent()">一键排版</button>
       <button class="panel-btn dark" onclick="BookTypesetting.original()">恢复原有版式</button>
@@ -99,7 +99,7 @@ window.BookTypesetting = (() => {
       </details>
       <details class="book-details"><summary>标题字体与全文粘贴</summary>
         <label class="label">标题字体<select id="bookTitleFont" onchange="BookTypesetting.selectTitle(this.value)">${options(s.titleFont)}</select></label>
-        <label class="label">标题字重／笔画粗细<select id="bookTitleWeight" onchange="BookTypesetting.selectWeight('title',this.value)">${weightOptions(s.titleFont,s.titleWeight)}</select></label>
+        <label class="label">标题字重／笔画粗细<div class="range-row"><input id="bookTitleWeight" type="range" min="200" max="900" step="1" value="${s.titleWeight}" onfocus="pushHistory()" oninput="BookTypesetting.selectWeight('title',this.value,true)"><output id="bookTitleWeightValue" for="bookTitleWeight">${s.titleWeight}</output></div></label>
         <p class="note">标题、正文可分别选择两种字体。一键排版保留当前选择。</p>
         <label class="label">粘贴全文<textarea id="referenceImport" class="reference-import" placeholder="粘贴后点击应用全文；当前内容不会因误粘贴立即被替换。"></textarea></label>
         <label class="note"><input id="referenceFirstTitle" type="checkbox" checked> 首个段落作为标题</label>
@@ -241,7 +241,7 @@ window.BookTypesetting = (() => {
     const legacy=Array.from(document.querySelectorAll('head style')).map(el=>el.textContent).join('\n');
     const title=a.card.querySelector('h1').textContent;
     const escaped=title.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-    const page='<!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>'+escaped+'</title><style>'+legacy+'</style><style data-book-typesetting="v30">'+bookCSS+'</style><style>:root{'+document.documentElement.style.cssText+'}body{margin:0}.edit{border-color:transparent!important;background:transparent!important;box-shadow:none!important}article{margin-inline:auto!important}</style><body>'+safeHTML(clone.outerHTML)+'</body></html>';
+    const page='<!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>'+escaped+'</title><style>'+legacy+'</style><style data-book-typesetting="v31">'+bookCSS+'</style><style>:root{'+document.documentElement.style.cssText+'}body{margin:0}.edit{border-color:transparent!important;background:transparent!important;box-shadow:none!important}article{margin-inline:auto!important}</style><body>'+safeHTML(clone.outerHTML)+'</body></html>';
     const url=URL.createObjectURL(new Blob([page],{type:'text/html;charset=utf-8'}));
     const link=document.createElement('a');link.href=url;link.download=(title.replace(/[\\/:*?"<>|]/g,'').slice(0,60)||'无墙之门')+'.html';link.click();
     setTimeout(()=>URL.revokeObjectURL(url),10000);showToast('阅读页已保存，字体选择与内容保留');

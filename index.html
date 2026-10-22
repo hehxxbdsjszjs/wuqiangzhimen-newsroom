@@ -5,7 +5,7 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
-  <meta name="app-version" content="v30-shared-book-typesetting">
+  <meta name="app-version" content="v31-shared-book-typesetting">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="mobile-web-app-capable" content="yes" />
@@ -392,8 +392,8 @@
     .panel::-webkit-scrollbar-thumb,.work::-webkit-scrollbar-thumb,.sp-tabs::-webkit-scrollbar-thumb,.tabs::-webkit-scrollbar-thumb{background:#888;border-radius:3px}
 
   </style>
-  <link rel="stylesheet" href="mobile-fonts.css?v=30">
-  <link rel="stylesheet" href="typography.css?v=30">
+  <link rel="stylesheet" href="mobile-fonts.css?v=31">
+  <link rel="stylesheet" href="typography.css?v=31">
 
 <!-- Service Worker 已彻底移除，避免缓存导致页面跳动/无限刷新 -->
 <script>
@@ -414,7 +414,7 @@ if ('serviceWorker' in navigator) {
   <nav class="nav">
     <span class="mark">N</span>
     <span class="brand">Newsroom Studio</span>
-    <span style="font-size:9px;color:#999;background:#f0f0f0;padding:1px 6px;border-radius:3px;margin-left:4px">v30</span>
+    <span style="font-size:9px;color:#999;background:#f0f0f0;padding:1px 6px;border-radius:3px;margin-left:4px">v31</span>
     <div class="tabs">
       <button data-tab="news" class="on">新闻排版</button>
       <button data-tab="write">写文章</button>
@@ -426,7 +426,7 @@ if ('serviceWorker' in navigator) {
   <div class="toast" id="toast"></div>
 
 
-  <script src="typography.js?v=30"></script>
+  <script src="typography.js?v=31"></script>
   <script>
     /* ============================================================
        无墙之门 · Newsroom Studio — v10 (持久化存储)
@@ -1044,7 +1044,7 @@ if ('serviceWorker' in navigator) {
     // ---- 高保真长图导出（懒加载 html2canvas，v16 起多源回退）----
     let _h2cLoaded = false, _h2cLoading = false;
     const H2C_SOURCES = [
-      'html2canvas.min.js',   // ① 站内同源副本（v16 随站点一起部署，国内访问最快最稳）
+      'html2canvas.min.js?v=31',   // ① 站内同源副本（v16 随站点一起部署，国内访问最快最稳）
       'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js',
       'https://unpkg.com/html2canvas@1.4.1/dist/html2canvas.min.js',
       'https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js'
@@ -1123,8 +1123,9 @@ if ('serviceWorker' in navigator) {
         backgroundColor: state.paper || '#fff',
         logging: false,
         scrollX: 0, scrollY: 0,
-        windowWidth: node.scrollWidth,
-        windowHeight: node.scrollHeight
+        // Keep the editing viewport: card width must not activate a different mobile layout.
+        windowWidth: document.documentElement.clientWidth,
+        windowHeight: window.innerHeight
       }).then(canvas => {
         restore.forEach(o => { o.e.style.borderColor = o.c; o.e.style.background = o.b; o.e.style.boxShadow = o.s; });
         empties.forEach(el => { el.style.display = el.dataset.prevDisplay; delete el.dataset.prevDisplay; });
@@ -1355,9 +1356,10 @@ if ('serviceWorker' in navigator) {
             <div class="color-row">
               <input type="color" value="${state.ink}" oninput="onStyleChange('ink',this.value)" onchange="pushHistory()" title="标题色">
               <input type="color" value="${state.red}" oninput="onStyleChange('red',this.value)" onchange="pushHistory()" title="强调色">
-              <input type="color" value="${state.paper}" oninput="onStyleChange('paper',this.value)" onchange="pushHistory()" title="纸张色">
+
             </div>
           </div>
+          <label class="label">自定义背景颜色<input id="bookBackgroundColor" type="color" value="${state.paper}" onfocus="pushHistory()" oninput="onStyleChange('paper',this.value)" title="自定义背景颜色"></label>
           <button class="panel-btn dark" onclick="resetState()">重置全部内容</button>
         </div>
       `;
